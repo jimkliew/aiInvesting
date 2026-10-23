@@ -160,7 +160,7 @@ svg .axis{stroke:var(--rule)}
 .strat-head{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;margin-bottom:12px}
 .strat-head p{margin:4px 0;max-width:70ch}
 .tickers{display:flex;gap:6px;margin:6px 0 10px}
-.trades td:nth-child(1),.trades td:nth-child(2){white-space:nowrap}
+.trades td:nth-child(1),.trades td:nth-child(2),.trades td:nth-child(5){white-space:nowrap}
 
 /* walkthrough */
 .walk{position:fixed;right:18px;bottom:18px;width:470px;max-height:74vh;overflow:auto;background:var(--panel);border:1px solid var(--rule);border-radius:6px;box-shadow:0 12px 32px rgba(27,36,48,.18);z-index:6;display:none}
@@ -727,7 +727,7 @@ function strategy(close){const n=close.length;const ret=close.map((c,i)=>i?c/clo
 let curTicker="NVDA";
 function drawPrice(){
   const svg=$("price"),tip=$("pricetip");svg.innerHTML="";const W=svg.clientWidth,H=svg.clientHeight;if(!W)return;
-  const S=strategy(simulate(TICKERS[curTicker]));const n=S.close.length;const m={l:52,r:70};const xs=i=>m.l+(W-m.l-m.r)*i/(n-1);
+  const S=strategy(simulate(TICKERS[curTicker]));const n=S.close.length;const m={l:52,r:118};const xs=i=>m.l+(W-m.l-m.r)*i/(n-1);
   const panels=[{y:14,h:270},{y:300,h:70},{y:388,h:110}];
   // price panel
   const P=panels[0];const vals=S.close.concat(S.sma20.filter(v=>!isNaN(v)),S.high20.filter(v=>!isNaN(v)));const lo=Math.min(...vals)*0.97,hi=Math.max(...vals)*1.03;const yp=v=>P.y+P.h*(1-(v-lo)/(hi-lo));
