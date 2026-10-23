@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Trading Lab, Mission Control (mockup)</title>
+<style>
+:root{
+  --paper:#f4f5f3; --panel:#fbfbfa; --rule:#d6dad2; --rule-2:#e6e9e3;
+  --ink:#1b2430; --ink-2:#56606e; --ink-3:#8a929d;
+  --accent:#1c5cab; --accent-hover:#184f95; --accent-soft:#e3edf9; --on-accent:#fff;
+  --team:#2a78d6; --quant:#eb6834; --desk:#1baf7a; --spy:#52514e;
+  --good:#0ca30c; --warn:#fab219; --serious:#ec835a; --crit:#d03b3b;
+  --font:"Avenir Next","Segoe UI",system-ui,sans-serif;
+  --cond:"Avenir Next Condensed","Arial Narrow","Avenir Next",system-ui,sans-serif;
+  --mono:"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font:14px/1.45 var(--font);color:var(--ink);background:var(--paper);display:flex;flex-direction:column;min-height:100vh}
+button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--ink-3)}
+button:focus-visible,.tabbar button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+button.primary:hover{background:var(--accent-hover)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th{font-weight:600;color:var(--ink-2);text-align:left;padding:6px 10px;border-bottom:1px solid var(--rule)}
+td{padding:7px 10px;border-bottom:1px solid var(--rule-2);vertical-align:top}
+td.num,th.num{text-align:right}
+.pos{color:var(--ink)} .neg{color:var(--ink)}
+.sign{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.sign.up{background:var(--good)} .sign.down{background:var(--crit)}
+h1,h2,h3{margin:0;font-weight:600}
+h2{font-size:15px}
+h3{font-size:13px;color:var(--ink-2)}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 22px;padding:10px 18px;border-bottom:1px solid var(--rule);background:var(--panel);position:relative}
+.brand{font-size:17px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
+.brand span{color:var(--ink-2);font-weight:400;margin-left:8px}
+.status{list-style:none;margin:0;padding:0;display:flex;gap:16px;color:var(--ink-2);flex:1;flex-wrap:nowrap}
+.status li{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--good);display:inline-block}
+.controls{display:flex;gap:6px;align-items:center;margin-left:auto}
+.controls button{white-space:nowrap}
+.switch{display:inline-flex;border:1px solid var(--rule);border-radius:4px;overflow:hidden;margin-left:6px}
+.switch button{border:0;border-radius:0;padding:3px 9px;background:transparent;color:var(--ink-2)}
+.switch button.on{background:var(--ink);color:#fff}
+.ribbon{background:var(--warn);color:var(--ink);font-size:11px;font-weight:600;padding:2px 8px;border-radius:3px;white-space:nowrap}
+
+.now{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--rule);background:var(--paper)}
+.now > div{padding:8px 18px;border-right:1px solid var(--rule-2)}
+.now > div:last-child{border-right:0}
+.now b{display:block;font-weight:600}
+.now span{color:var(--ink-2);font-size:13px}
+.meter{height:5px;background:var(--rule-2);border-radius:3px;margin-top:6px;overflow:hidden}
+.meter i{display:block;height:100%;width:51%;background:var(--accent)}
+
+/* workspace */
+.work{display:grid;grid-template-columns:230px 1fr 330px;height:46vh;min-height:330px;border-bottom:1px solid var(--rule)}
+.work > *{min-height:0;overflow:auto}
+.rail{border-right:1px solid var(--rule);padding:10px 0;background:var(--panel)}
+.rail h3{padding:0 14px 8px}
+.s{display:grid;grid-template-columns:56px 1fr;gap:0 8px;align-items:center;padding:8px 14px 8px 11px;border-left:3px solid transparent}
+.s.done .n{color:var(--ink-2)}
+.s.live{border-left-color:var(--accent);background:var(--accent-soft)}
+.s.queued{color:var(--ink-3)}
+.s .n{font:600 18px var(--cond)}
+.s .q{font-size:12px;color:var(--ink-2)}
+.s .r{font-size:13px;line-height:1.3}
+.s .r b{font-weight:600}
+.s svg{width:64px;height:22px;display:block}
+
+.feed{display:flex;flex-direction:column;background:var(--paper)}
+.feedhead{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--rule-2);position:sticky;top:0;background:var(--paper);z-index:1}
+.feedhead h2{margin-right:auto}
+.chip{border:1px solid var(--rule);border-radius:12px;padding:2px 10px;font-size:12px;background:transparent;color:var(--ink-2)}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.rows{padding:4px 0 10px;font:12.5px/1.5 var(--mono)}
+.row{display:grid;grid-template-columns:62px 124px 1fr;gap:10px;padding:5px 14px;border-bottom:1px solid var(--rule-2);align-items:start}
+.row.new{animation:in .35s ease-out}
+@keyframes in{from{background:var(--accent-soft)}to{background:transparent}}
+.row time{color:var(--ink-3)}
+.tag{display:inline-block;font:600 11px/1.6 var(--font);padding:0 7px;border-radius:3px;white-space:nowrap;color:var(--ink)}
+.tag.idea{background:#e9e4fb}.tag.coder{background:#fde8dc}.tag.critic{background:#fff1c8}.tag.trader{background:#dcecfb}
+.tag.review{background:#fbe0ea}.tag.engine{background:#e4e7e2}.tag.data{background:#d9f3e8}.tag.selector{background:#e4e7e2}.tag.sandbox{background:#e4e7e2}
+.msg{white-space:pre-wrap;word-break:break-word}
+.msg .act{font-weight:700}
+.msg .why{color:var(--ink-2)}
+.msg details{margin-top:3px}
+.msg summary{cursor:pointer;color:var(--accent);font:12px var(--font)}
+.msg pre{margin:4px 0 0;padding:8px;background:var(--panel);border:1px solid var(--rule-2);border-radius:4px;overflow:auto}
+
+.season{border-left:1px solid var(--rule);padding:12px 16px;background:var(--panel)}
+.season h2{margin-bottom:2px}
+.season .sub{color:var(--ink-2);font-size:13px;margin-bottom:10px}
+.figs{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-bottom:10px}
+.fig{border-top:1px solid var(--rule-2);padding-top:6px}
+.fig small{display:flex;align-items:center;gap:6px;color:var(--ink-2);font-size:12px}
+.fig small i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.fig b{display:block;font:600 30px/1.1 var(--cond);letter-spacing:-.01em}
+.spark{width:100%;height:84px;display:block;margin:4px 0 8px}
+.mini td,.mini th{padding:4px 6px;font-size:12.5px}
+
+/* tabs */
+.tabs{flex:1;display:flex;flex-direction:column;min-height:0}
+.tabbar{display:flex;gap:2px;padding:0 12px;border-bottom:1px solid var(--rule);background:var(--panel)}
+.tabbar button{border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;padding:10px 12px;color:var(--ink-2);font-weight:500}
+.tabbar button.on{color:var(--ink);border-bottom-color:var(--accent)}
+.panel{display:none;padding:16px 18px 28px;overflow:auto}
+.panel.on{display:block}
+
+.score{display:grid;grid-template-columns:repeat(6,1fr);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin-bottom:18px}
+.score > div{padding:10px 14px 12px;border-right:1px solid var(--rule-2)}
+.score > div:last-child{border-right:0}
+.score small{color:var(--ink-2);font-size:12.5px;display:block}
+.score b{font:600 34px/1.1 var(--cond);letter-spacing:-.01em}
+.score b em{font:500 15px var(--font);color:var(--ink-2);margin-left:4px}
+
+.grid2{display:grid;grid-template-columns:2fr 1fr;gap:26px;align-items:start}
+.chart{position:relative}
+.chart h2{margin-bottom:2px}
+.chart .lead{color:var(--ink-2);font-size:13px;margin-bottom:8px;max-width:70ch}
+.legend{display:flex;gap:16px;font-size:12.5px;color:var(--ink-2);margin:4px 0 2px}
+.legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
+.legend i.ref{height:2px}
+svg text{font-family:var(--font);font-size:11.5px;fill:var(--ink-2)}
+svg .lbl{font-weight:600;fill:var(--ink)}
+svg .grid{stroke:var(--rule-2)}
+svg .axis{stroke:var(--rule)}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:#fff;font-size:12px;padding:6px 9px;border-radius:4px;white-space:nowrap;display:none;z-index:2;font-variant-numeric:tabular-nums}
+.tip b{font-weight:600}
+.marker{cursor:default}
+.note{font-size:12.5px;color:var(--ink-2);max-width:72ch}
+
+.card{border-top:1px solid var(--rule);padding:12px 0 14px;max-width:1080px}
+.card h2{display:flex;gap:12px;align-items:baseline}
+.card h2 small{font-weight:400;color:var(--ink-2);font-size:13px}
+.card p{margin:6px 0;max-width:80ch}
+.rec{display:grid;grid-template-columns:28px 1fr 130px;gap:10px;padding:8px 0;border-top:1px solid var(--rule-2)}
+.rec .id{font:600 16px var(--cond);color:var(--ink-2)}
+.rec code{font:12px var(--mono);background:var(--panel);border:1px solid var(--rule-2);padding:0 4px;border-radius:3px}
+.rec .st{font-size:12.5px;color:var(--ink-2);text-align:right}
+.rec .st.applied::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--good);margin-right:6px}
+.rec .st.reverted::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--serious);margin-right:6px}
+.rec .st.pending::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warn);margin-right:6px}
+.rec .btns{display:flex;gap:6px;justify-content:flex-end;margin-top:4px}
+.rec .btns button{padding:2px 8px;font-size:12px}
+.code{font:12px/1.5 var(--mono);background:var(--panel);border:1px solid var(--rule-2);padding:10px 12px;border-radius:4px;overflow:auto;white-space:pre}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.verdict{font-weight:600}
+.verdict.keep::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--good);margin-right:6px}
+.verdict.discard::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--serious);margin-right:6px}
+.verdict.failed::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--crit);margin-right:6px}
+
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 14px;border-radius:4px;font-size:13px;display:none;z-index:9}
+
+@media (max-width:1520px){.status li:nth-child(2){display:none}}
+@media (max-width:1100px){.work{grid-template-columns:200px 1fr}.season{grid-column:1/-1;border-left:0;border-top:1px solid var(--rule)}.score{grid-template-columns:repeat(3,1fr)}.grid2{grid-template-columns:1fr}.now{grid-template-columns:repeat(3,1fr)}}
+@media (prefers-reduced-motion:reduce){.row.new{animation:none}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1 class="brand">AI Trading Lab <span>Mission Control</span></h1>
+  <div class="ribbon">Mockup, sample data</div>
+  <ul class="status">
+    <li><i class="dot"></i>Ollama, qwen3:8b</li>
+    <li><i class="dot"></i>Data, 13 tickers, hash 3f9c</li>
+    <li>Campaign 3</li>
+    <li>Review changes
+      <span class="switch" role="group" aria-label="Apply mode">
+        <button class="on" data-toast="Review changes apply automatically after each season">Apply</button>
+        <button data-toast="Recommendations wait for your Accept or Reject">Ask me</button>
+      </span>
+    </li>
+  </ul>
+  <div class="controls">
+    <button class="primary" data-toast="Would start season 5 after the current one finishes">Run next season</button>
+    <button data-toast="Would advance one agent turn">Step</button>
+    <button data-toast="Would pause after the current agent turn">Pause</button>
+    <button data-toast="Would stop and keep partial results">Stop</button>
+    <button data-toast="Would replay a recorded campaign at 1x, 5x or instant">Replay</button>
+  </div>
+</header>
+
+<section class="now">
+  <div><b>Season 4 of 6</b><span>2025 Q4, 1 Oct to 31 Dec</span></div>
+  <div><b>Phase 2, Trading</b><span>week 8 of 13</span></div>
+  <div><b>Trader, momentum persona</b><span>deciding on TSLA</span></div>
+  <div><b>LLM calls 112 of 220</b><div class="meter"><i></i></div></div>
+  <div><b>11:40</b><span>elapsed, about 3 min per season</span></div>
+</section>
+
+<main class="work">
+  <aside class="rail" aria-label="Seasons">
+    <h3>Seasons, team vs SPY</h3>
+    <div id="ladder"></div>
+  </aside>
+
+  <section class="feed" aria-label="Live agent feed">
+    <div class="feedhead">
+      <h2>Live feed</h2>
+      <button class="chip on">All</button><button class="chip">Research</button><button class="chip">Trading</button><button class="chip">Review</button>
+      <button class="chip" id="follow" data-toast="Following new events">Following</button>
+    </div>
+    <div class="rows" id="rows"></div>
+  </section>
+
+  <aside class="season" aria-label="This season">
+    <h2>Season 4, 2025 Q4</h2>
+    <div class="sub">Return so far, 8 of 13 weeks traded</div>
+    <div class="figs">
+      <div class="fig"><small><i style="background:var(--team)"></i>Team</small><b>+1.5%</b></div>
+      <div class="fig"><small><i style="background:var(--spy)"></i>SPY</small><b>+1.4%</b></div>
+      <div class="fig"><small><i style="background:var(--quant)"></i>Quant book</small><b>+2.1%</b></div>
+      <div class="fig"><small><i style="background:var(--desk)"></i>Desk</small><b>+0.9%</b></div>
+    </div>
+    <svg class="spark" id="spark" role="img" aria-label="Season 4 equity so far"></svg>
+    <table class="mini">
+      <thead><tr><th>Strategy</th><th class="num">Val Sharpe</th><th class="num">Season</th></tr></thead>
+      <tbody>
+        <tr><td>breakout_20d_volscale, quant book</td><td class="num">1.31</td><td class="num">+2.1%</td></tr>
+        <tr><td>momo_12_1_volscale</td><td class="num">0.88</td><td class="num">+1.7%</td></tr>
+        <tr><td>sma50_200_trend</td><td class="num">0.61</td><td class="num">+1.2%</td></tr>
+        <tr><td>Desk, momentum persona</td><td class="num">–</td><td class="num">+0.9%</td></tr>
+        <tr><td>Buy and hold SPY</td><td class="num">–</td><td class="num">+1.4%</td></tr>
+        <tr><td>SMA crossover</td><td class="num">–</td><td class="num">+0.6%</td></tr>
+      </tbody>
+    </table>
+  </aside>
+</main>
+
+<section class="tabs">
+  <div class="tabbar" role="tablist">
+    <button class="on" data-tab="progress">Progress</button>
+    <button data-tab="season">Season</button>
+    <button data-tab="notebook">Notebook</button>
+    <button data-tab="desk">Desk</button>
+    <button data-tab="reviews">Reviews</button>
+    <button data-tab="changelog">Changelog</button>
+    <button data-tab="prompts">Prompts</button>
+    <button data-tab="runs">Runs</button>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="panel on" id="tab-progress">
+    <div class="score">
+      <div><small>Seasons beating SPY</small><b>2<em>of 3 finished</em></b></div>
+      <div><small>Excess return since season 1</small><b>+1.5<em>pts vs SPY</em></b></div>
+      <div><small>Sharpe, out of sample</small><b>1.1</b></div>
+      <div><small>Worst drawdown</small><b>−6.2%</b></div>
+      <div><small>Strategies tried</small><b>19<em>4 kept</em></b></div>
+      <div><small>Lessons the coach kept</small><b>3<em>1 reverted</em></b></div>
+    </div>
+
+    <div class="grid2">
+      <div class="chart" id="trackwrap">
+        <h2>Track record, out of sample</h2>
+        <div class="lead">Growth of 1.00 across seasons the team had not yet seen. Numbered flags mark where a Review change took effect. Hover for weekly values.</div>
+        <div class="legend"><span><i style="background:var(--team)"></i>Team, half quant book and half desk</span><span><i style="background:var(--quant)"></i>Quant book</span><span><i style="background:var(--desk)"></i>Desk</span><span><i class="ref" style="background:var(--spy)"></i>SPY</span></div>
+        <svg id="track" role="img" aria-label="Cumulative out-of-sample growth of the team, quant book, desk and SPY across four seasons" style="width:100%;height:340px;display:block"></svg>
+        <div class="tip" id="tracktip"></div>
+      </div>
+
+      <div>
+        <div class="chart" id="excesswrap">
+          <h2>Excess return by season</h2>
+          <div class="lead">Team minus SPY, in percentage points.</div>
+          <svg id="excess" role="img" aria-label="Excess return of the team over SPY per season" style="width:100%;height:170px;display:block"></svg>
+          <div class="tip" id="excesstip"></div>
+        </div>
+        <div class="chart" style="margin-top:18px">
+          <h2>Did validation predict the season?</h2>
+          <div class="lead">Sharpe of the chosen quant book on its validation year (hollow) and on the season it then traded (filled).</div>
+          <svg id="predict" role="img" aria-label="Validation Sharpe versus realised season Sharpe for the chosen strategy" style="width:100%;height:150px;display:block"></svg>
+        </div>
+      </div>
+    </div>
+
+    <h2 style="margin:22px 0 6px">Season by season</h2>
+    <table>
+      <thead><tr><th>Season</th><th>Quant book chosen</th><th class="num">Val Sharpe</th><th class="num">Team</th><th class="num">SPY</th><th class="num">Excess</th><th class="num">Desk</th><th>Coach verdict</th><th>Changes applied before next season</th></tr></thead>
+      <tbody>
+        <tr><td>S1, 2025 Q1</td><td>sma50_200_trend</td><td class="num">1.42</td><td class="num">−0.8%</td><td class="num">−4.3%</td><td class="num"><i class="sign up"></i>+3.5</td><td class="num">−2.1%</td><td>Beat SPY; desk bought falling knives</td><td>1, 2</td></tr>
+        <tr><td>S2, 2025 Q2</td><td>momo_12_1_volscale</td><td class="num">1.18</td><td class="num">+6.6%</td><td class="num">+10.6%</td><td class="num"><i class="sign down"></i>−4.0</td><td class="num">+5.4%</td><td>Lagged; too much cash in the rebound</td><td>3, 4, 5</td></tr>
+        <tr><td>S3, 2025 Q3</td><td>momo_12_1_volscale</td><td class="num">0.95</td><td class="num">+9.5%</td><td class="num">+8.1%</td><td class="num"><i class="sign up"></i>+1.4</td><td class="num">+8.9%</td><td>Beat SPY; lesson 4 fired three times, all profitable</td><td>6 (reverts 5), 7</td></tr>
+        <tr><td>S4, 2025 Q4, in progress</td><td>breakout_20d_volscale</td><td class="num">1.31</td><td class="num">+1.5%</td><td class="num">+1.4%</td><td class="num"><i class="sign up"></i>+0.1</td><td class="num">+0.9%</td><td>Review runs when the quarter closes</td><td></td></tr>
+      </tbody>
+    </table>
+    <p class="note" style="margin-top:10px">Four seasons is too few to separate skill from luck. The course question is whether the loop measures the right things and whether the coach's changes can be traced to an effect, not whether this team beats the market.</p>
+  </div>
+
+  <!-- SEASON -->
+  <div class="panel" id="tab-season">
+    <div class="two">
+      <div>
+        <h2>Leaderboard, season 4</h2>
+        <p class="note">Validation metrics were known before the season. Season metrics update as the desk trades.</p>
+        <table>
+          <thead><tr><th>Strategy</th><th>Family</th><th class="num">Val Sharpe</th><th class="num">Val turnover</th><th class="num">Season return</th><th class="num">Season Sharpe</th><th class="num">Max DD</th></tr></thead>
+          <tbody>
+            <tr><td>breakout_20d_volscale, quant book</td><td>trend</td><td class="num">1.31</td><td class="num">140%</td><td class="num">+2.1%</td><td class="num">1.6</td><td class="num">−2.4%</td></tr>
+            <tr><td>momo_12_1_volscale</td><td>trend</td><td class="num">0.88</td><td class="num">95%</td><td class="num">+1.7%</td><td class="num">1.2</td><td class="num">−3.0%</td></tr>
+            <tr><td>sma50_200_trend</td><td>trend</td><td class="num">0.61</td><td class="num">40%</td><td class="num">+1.2%</td><td class="num">0.9</td><td class="num">−2.8%</td></tr>
+            <tr><td>vol_target_spy</td><td>volatility</td><td class="num">0.52</td><td class="num">210%</td><td class="num">+0.8%</td><td class="num">0.7</td><td class="num">−2.1%</td></tr>
+            <tr><td>Desk, momentum persona</td><td>discretionary</td><td class="num">–</td><td class="num">–</td><td class="num">+0.9%</td><td class="num">0.6</td><td class="num">−3.6%</td></tr>
+            <tr><td>Buy and hold SPY</td><td>baseline</td><td class="num">–</td><td class="num">0%</td><td class="num">+1.4%</td><td class="num">0.8</td><td class="num">−3.9%</td></tr>
+            <tr><td>SMA 50/200 crossover</td><td>baseline</td><td class="num">–</td><td class="num">30%</td><td class="num">+0.6%</td><td class="num">0.4</td><td class="num">−2.9%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h2>Chosen quant book: breakout_20d_volscale</h2>
+        <p><b>Hypothesis</b> (Idea Agent, season 4, round 1): stocks closing above their 20-day high tend to keep rising for several weeks; scaling the position by inverse 20-day volatility keeps the book from being dominated by the most volatile names.</p>
+        <p><b>Critic</b>: <span class="verdict keep">Keep</span>. Positive in 5 of 6 validation sub-periods; turnover 140% per year is inside the limit set by lesson 7.</p>
+        <div class="code">def generate_signals(prices, features):
+    high20 = prices.rolling(20).max().shift(1)
+    breakout = prices &gt; high20
+    vol20 = features["ret_1d"].rolling(20).std()
+    raw = breakout.astype(float) / vol20
+    w = raw.div(raw.sum(axis=1), axis=0).fillna(0.0)
+    return w.clip(0, 0.30)</div>
+        <p class="note">Sandbox: 38 lines, no imports, 0.9 s. Lookahead test: signals identical when the future is withheld.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTEBOOK -->
+  <div class="panel" id="tab-notebook">
+    <h2>Lab notebook, every strategy the team has tried</h2>
+    <p class="note">Carried across seasons. The Idea Agent reads this before proposing, so it does not repeat itself. Retired strategies stay visible.</p>
+    <table>
+      <thead><tr><th>Season</th><th>Strategy</th><th>Family</th><th>Hypothesis</th><th class="num">Train Sharpe</th><th class="num">Val Sharpe</th><th>Critic</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>S1</td><td>sma50_200_trend</td><td>trend</td><td>Hold names above their 200-day average when the 50-day is also rising</td><td class="num">0.98</td><td class="num">1.42</td><td><span class="verdict keep">Keep</span></td><td>Candidate</td></tr>
+        <tr><td>S1</td><td>rsi2_meanrev</td><td>mean reversion</td><td>Buy 2-day RSI below 10, sell above 70</td><td class="num">1.60</td><td class="num">0.21</td><td><span class="verdict discard">Discard</span>, train/val gap suggests overfit</td><td>Retired, change 5</td></tr>
+        <tr><td>S1</td><td>bollinger_revert</td><td>mean reversion</td><td>Buy closes below the lower band</td><td class="num">0.44</td><td class="num">0.12</td><td><span class="verdict discard">Discard</span></td><td>Discarded</td></tr>
+        <tr><td>S1</td><td>gap_fade</td><td>mean reversion</td><td>Fade overnight gaps larger than 2%</td><td class="num">–</td><td class="num">–</td><td><span class="verdict failed">Failed</span>, used next-day open (lookahead)</td><td>Failed</td></tr>
+        <tr><td>S1</td><td>momo_12_1_volscale</td><td>trend</td><td>Rank by 12-month return skipping the last month; scale by volatility</td><td class="num">0.91</td><td class="num">1.18</td><td><span class="verdict keep">Keep</span></td><td>Candidate</td></tr>
+        <tr><td>S1</td><td>xsec_momo_top3</td><td>cross-sectional</td><td>Equal weight the top 3 by 6-month return</td><td class="num">0.77</td><td class="num">0.64</td><td><span class="verdict keep">Keep</span>, concentrated</td><td>Candidate</td></tr>
+        <tr><td>S1</td><td>vol_breakout</td><td>volatility</td><td>Buy when 10-day vol drops below its 60-day median</td><td class="num">0.35</td><td class="num">0.30</td><td><span class="verdict discard">Discard</span></td><td>Discarded</td></tr>
+        <tr><td>S1</td><td>sma20_pullback</td><td>trend</td><td>Buy pullbacks to the 20-day in uptrends</td><td class="num">0.70</td><td class="num">0.58</td><td><span class="verdict discard">Discard</span>, turnover 410%</td><td>Discarded</td></tr>
+        <tr><td>S2</td><td>donchian_55</td><td>trend</td><td>55-day channel breakout</td><td class="num">0.62</td><td class="num">0.71</td><td><span class="verdict keep">Keep</span></td><td>Candidate</td></tr>
+        <tr><td>S2</td><td>ema_ribbon</td><td>trend</td><td>Long when 8, 21, 55-day EMAs are stacked</td><td class="num">0.80</td><td class="num">0.49</td><td><span class="verdict discard">Discard</span></td><td>Discarded</td></tr>
+        <tr><td>S3</td><td>vol_target_spy</td><td>volatility</td><td>Hold SPY scaled to a 10% volatility target</td><td class="num">0.58</td><td class="num">0.52</td><td><span class="verdict keep">Keep</span></td><td>Candidate</td></tr>
+        <tr><td>S4</td><td>breakout_20d_volscale</td><td>trend</td><td>20-day high breakout scaled by inverse volatility</td><td class="num">1.08</td><td class="num">1.31</td><td><span class="verdict keep">Keep</span></td><td>Quant book, S4</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Showing 12 of 19. Seven more were discarded in seasons 2 and 3.</p>
+  </div>
+
+  <!-- DESK -->
+  <div class="panel" id="tab-desk">
+    <h2>Trading desk, every weekly decision</h2>
+    <p class="note">The persona sees only data up to the decision date. The engine fills at the next open. Best and worst decisions by one-month outcome are flagged for the Review Agent.</p>
+    <table>
+      <thead><tr><th>Week</th><th>Persona</th><th>Ticker</th><th>Action</th><th class="num">Weight</th><th class="num">Confidence</th><th>Stated reason</th><th class="num">1-month outcome</th></tr></thead>
+      <tbody>
+        <tr><td>S4 w8, 24 Nov</td><td>momentum</td><td>TSLA</td><td>Sell</td><td class="num">0.15 to 0</td><td class="num">0.68</td><td>Closed below the 50-day two weeks running; one-month return −9%; lesson 1 applies.</td><td class="num">pending</td></tr>
+        <tr><td>S4 w8, 24 Nov</td><td>momentum</td><td>AAPL</td><td>Hold</td><td class="num">0.20</td><td class="num">0.55</td><td>Sideways between the 20-day and 50-day; no new information.</td><td class="num">pending</td></tr>
+        <tr><td>S4 w7, 17 Nov</td><td>momentum</td><td>NVDA</td><td>Buy</td><td class="num">0.20 to 0.30</td><td class="num">0.72</td><td>Above all three averages, three-month return +18%, RSI 61; trend intact.</td><td class="num">pending</td></tr>
+        <tr><td>S3 w5, 4 Aug</td><td>momentum</td><td>MSFT</td><td>Buy</td><td class="num">0 to 0.25</td><td class="num">0.70</td><td>Reversed above the 20-day for two weeks after a 9% drawdown; lesson 4 says re-enter.</td><td class="num"><i class="sign up"></i>+6.8%, best</td></tr>
+        <tr><td>S2 w3, 21 Apr</td><td>momentum</td><td>SPY</td><td>Hold</td><td class="num">0.10</td><td class="num">0.60</td><td>Still below the 50-day; waiting for confirmation.</td><td class="num"><i class="sign down"></i>missed +7.1%, worst</td></tr>
+        <tr><td>S1 w6, 10 Feb</td><td>momentum</td><td>TSLA</td><td>Buy</td><td class="num">0.10 to 0.25</td><td class="num">0.64</td><td>Oversold after a 15% drop; expecting a bounce.</td><td class="num"><i class="sign down"></i>−11.2%, worst</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Showing 6 of 47 decisions.</p>
+  </div>
+
+  <!-- REVIEWS -->
+  <div class="panel" id="tab-reviews">
+    <h2>Coach's reviews</h2>
+    <p class="note">After each season the Review Agent reads the scorecard, the track record, the changelog, the notebook and the desk's best and worst decisions. It may only recommend changes from the lever menu.</p>
+
+    <div class="card">
+      <h2>After season 3, 2025 Q3 <small>team +9.5%, SPY +8.1%</small></h2>
+      <p><b>Assessment.</b> The team beat SPY by 1.4 points. Lesson 4 (re-enter after a drawdown reverses above the 20-day) fired three times and all three were profitable, adding about 1.1 points. Raising the desk's maximum weight (change 3) added 0.4 points of return and 18% turnover with no change in drawdown. Raising the critic's validation bar to 0.8 (change 5) left only one Keep candidate in research, so the selector reused last season's book.</p>
+      <p><b>What worked.</b> Trend strategies in a trending quarter; the re-entry lesson.</p>
+      <p><b>What failed.</b> The stricter critic starved the book of candidates.</p>
+      <div class="rec"><div class="id">6</div><div><code>revert(5)</code> Put the critic's minimum validation Sharpe back to 0.5. <span class="why">One Keep in four ideas is too few to choose from; the bar was the cause, not the ideas.</span><br><small>Expect: 2 to 3 Keep candidates per round. Revert if: fewer than 2 next season.</small></div><div class="st applied">Applied</div></div>
+      <div class="rec"><div class="id">7</div><div><code>add_lesson(critic)</code> "Discard strategies whose validation turnover exceeds 300% per year; the two highest-turnover candidates lost most of their edge to costs." <span class="why">sma20_pullback and ema_ribbon lost 0.6 and 0.4 Sharpe to costs.</span><br><small>Expect: fewer high-churn candidates reach the selector. Revert if: no candidate is discarded for turnover in two seasons.</small></div><div class="st applied">Applied</div></div>
+    </div>
+
+    <div class="card">
+      <h2>After season 2, 2025 Q2 <small>team +6.6%, SPY +10.6%</small></h2>
+      <p><b>Assessment.</b> The team lagged SPY by 4.0 points. The quant book held about 25% cash through the April rebound because its signal needs a month of strength. The desk held on five of six weeks in April and May while SPY gained 9%; its stated reasons all waited for the 50-day average.</p>
+      <div class="rec"><div class="id">3</div><div><code>set_param(desk.max_weight, 0.25 to 0.30)</code> <span class="why">The desk was never fully invested in a strong quarter.</span><br><small>Expect: higher participation in up-weeks. Revert if: drawdown worsens by more than 2 points.</small></div><div class="st applied">Applied</div></div>
+      <div class="rec"><div class="id">4</div><div><code>add_lesson(trader_momentum)</code> "After a drawdown larger than 8% reverses above the 20-day average for two weeks, re-enter rather than wait for the 50-day." <span class="why">Waiting for the 50-day cost 7.1 points on SPY alone.</span><br><small>Expect: earlier re-entry. Revert if: re-entries lose money twice in a row.</small></div><div class="st applied">Applied</div></div>
+      <div class="rec"><div class="id">5</div><div><code>set_param(critic.min_val_sharpe, 0.5 to 0.8)</code> <span class="why">Two Keep candidates had validation Sharpe under 0.7 and both underperformed.</span><br><small>Expect: a stronger book. Revert if: fewer than two Keep candidates per round.</small></div><div class="st reverted">Reverted by 6</div></div>
+    </div>
+
+    <div class="card">
+      <h2>After season 1, 2025 Q1 <small>team −0.8%, SPY −4.3%</small></h2>
+      <p><b>Assessment.</b> The team beat SPY by 3.5 points, almost entirely because the quant book moved 40% to cash when the 50/200 cross turned in February. The desk lost 2.1 points buying dips in NVDA and TSLA that kept falling; four of its five worst decisions called a stock oversold while RSI was above 40.</p>
+      <div class="rec"><div class="id">1</div><div><code>add_lesson(trader_momentum)</code> "Do not call a stock oversold unless RSI 14 is below 30 and it sits below its 50-day average. Dip buying lost 1.6 points in 2025 Q1." <span class="why">Grounded in the four worst decisions.</span><br><small>Expect: fewer dip buys in downtrends. Revert if: the desk misses two rebounds in a row.</small></div><div class="st applied">Applied</div></div>
+      <div class="rec"><div class="id">2</div><div><code>set_family_focus(["trend", "volatility"], avoid ["mean reversion"])</code> <span class="why">All three mean-reversion ideas scored validation Sharpe below 0.3; one failed the lookahead test.</span><br><small>Expect: more Keep candidates per round. Revert if: trend ideas also stop passing.</small></div><div class="st applied">Applied</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Pending, when season 4 closes <small>in "Ask me" mode recommendations wait here</small></h2>
+      <div class="rec"><div class="id">8</div><div><code>add_lesson(idea)</code> Example of a queued recommendation awaiting your decision. <span class="why">Shown so you can see the approve flow.</span></div><div><div class="st pending">Waiting</div><div class="btns"><button data-toast="Would apply change 8 before season 5">Accept</button><button data-toast="Would reject change 8 and log why">Reject</button></div></div></div>
+    </div>
+  </div>
+
+  <!-- CHANGELOG -->
+  <div class="panel" id="tab-changelog">
+    <h2>Changelog, what changed between seasons and why</h2>
+    <table>
+      <thead><tr><th class="num">Change</th><th>Applied before</th><th>Lever</th><th>Target</th><th>Change</th><th>Grounded in</th><th>Effect so far</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td>S2</td><td>add_lesson</td><td>trader_momentum</td><td>No "oversold" calls unless RSI below 30 and price below the 50-day</td><td>4 of 5 worst S1 decisions</td><td>Zero dip buys in downtrends since; desk drawdown −3.6% vs −7.9%</td><td><span class="verdict keep">Active</span></td></tr>
+        <tr><td class="num">2</td><td>S2</td><td>set_family_focus</td><td>idea</td><td>Emphasise trend and volatility; avoid mean reversion</td><td>3 of 3 mean-reversion ideas below 0.3</td><td>Keep rate rose from 3 of 8 to 2 of 4</td><td><span class="verdict keep">Active</span></td></tr>
+        <tr><td class="num">3</td><td>S3</td><td>set_param</td><td>desk.max_weight</td><td>0.25 to 0.30</td><td>Desk under-invested in S2 rally</td><td>+0.4 pts return, +18% turnover, drawdown unchanged</td><td><span class="verdict keep">Active</span></td></tr>
+        <tr><td class="num">4</td><td>S3</td><td>add_lesson</td><td>trader_momentum</td><td>Re-enter after an 8% drawdown reverses above the 20-day for two weeks</td><td>Missed +7.1% on SPY in April</td><td>Fired 3 times in S3, all profitable, about +1.1 pts</td><td><span class="verdict keep">Active</span></td></tr>
+        <tr><td class="num">5</td><td>S3</td><td>set_param</td><td>critic.min_val_sharpe</td><td>0.5 to 0.8</td><td>Weak Keeps underperformed in S2</td><td>Only 1 Keep in S3 research</td><td><span class="verdict discard">Reverted by 6</span></td></tr>
+        <tr><td class="num">6</td><td>S4</td><td>revert</td><td>change 5</td><td>Critic bar back to 0.5</td><td>Candidate starvation in S3</td><td>3 Keep candidates in S4 round 1</td><td><span class="verdict keep">Active</span></td></tr>
+        <tr><td class="num">7</td><td>S4</td><td>add_lesson</td><td>critic</td><td>Discard validation turnover above 300% per year</td><td>Two high-churn candidates lost edge to costs</td><td>1 candidate discarded for turnover in S4</td><td><span class="verdict keep">Active</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PROMPTS -->
+  <div class="panel" id="tab-prompts">
+    <div class="two">
+      <div>
+        <h2>Prompts and lessons per agent</h2>
+        <p class="note">Each agent has one prompt file. Lessons the coach adds are appended in a separate block so you can see what the team learned versus what you wrote. Manual edits are logged in the changelog.</p>
+        <table>
+          <thead><tr><th>Agent</th><th class="num">Prompt words</th><th class="num">Lessons</th><th>Output schema</th><th>Tools</th></tr></thead>
+          <tbody>
+            <tr><td>Data Agent</td><td class="num">210</td><td class="num">0</td><td>DataPlan, DataSummary</td><td>4</td></tr>
+            <tr><td>Idea Agent</td><td class="num">260</td><td class="num">0, family focus set</td><td>Hypothesis[]</td><td>0</td></tr>
+            <tr><td>Coder Agent</td><td class="num">190</td><td class="num">0</td><td>StrategyCode</td><td>0</td></tr>
+            <tr><td>Critic Agent</td><td class="num">230</td><td class="num">1</td><td>Review</td><td>0</td></tr>
+            <tr><td>Trader, momentum</td><td class="num">240</td><td class="num">2</td><td>Decision</td><td>0</td></tr>
+            <tr><td>Trader, contrarian</td><td class="num">235</td><td class="num">0, not in this campaign</td><td>Decision</td><td>0</td></tr>
+            <tr><td>Trader, risk averse</td><td class="num">228</td><td class="num">0, not in this campaign</td><td>Decision</td><td>0</td></tr>
+            <tr><td>Review Agent</td><td class="num">320</td><td class="num">0</td><td>SeasonReview</td><td>0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h2>trader_momentum.md</h2>
+        <div class="code">You are a momentum trader managing one sleeve of a long-only
+portfolio. Each week you receive a snapshot for one ticker:
+recent closes, where price sits against its 20, 50 and 200-day
+averages, RSI 14, returns over 1, 3 and 12 months, realised
+volatility and your current weight.
+
+Decide one action: BUY, SELL or HOLD, with a target weight
+between 0 and the maximum allowed, a confidence from 0 to 1,
+and one sentence of reasoning grounded in the numbers shown.
+Prefer names in established uptrends. Cut positions that lose
+their trend. Never reference information not in the snapshot.
+
+## Lessons from the coach
+1. (after S1) Do not call a stock oversold unless RSI 14 is
+   below 30 and it sits below its 50-day average. Dip buying
+   lost 1.6 points in 2025 Q1.
+4. (after S2) After a drawdown larger than 8% reverses above
+   the 20-day average for two weeks, re-enter rather than
+   wait for the 50-day.</div>
+        <div style="margin-top:8px;display:flex;gap:6px"><button data-toast="Would open the prompt for editing">Edit prompt</button><button data-toast="Would save and log a manual change">Save</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RUNS -->
+  <div class="panel" id="tab-runs">
+    <h2>Campaigns</h2>
+    <table>
+      <thead><tr><th>Campaign</th><th>Model</th><th>Seasons</th><th>Desk</th><th>Review mode</th><th class="num">Team</th><th class="num">SPY</th><th class="num">LLM calls</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>3, running</td><td>qwen3:8b</td><td>6, from 2025 Q1</td><td>1 persona</td><td>Apply</td><td class="num">+17.5% so far</td><td class="num">+16.0%</td><td class="num">112</td><td><button data-toast="This is the live campaign">Open</button></td></tr>
+        <tr><td>2</td><td>qwen3:8b</td><td>6, from 2025 Q1</td><td>1 persona</td><td>Off, no coach</td><td class="num">+12.9%</td><td class="num">+23.4%</td><td class="num">198</td><td><button data-toast="Would replay campaign 2">Replay</button> <button data-toast="Would overlay campaign 2 on the track record">Compare</button></td></tr>
+        <tr><td>1</td><td>qwen3:4b</td><td>3, from 2025 Q1</td><td>1 persona</td><td>Apply</td><td class="num">+4.1%</td><td class="num">+14.6%</td><td class="num">131</td><td><button data-toast="Would replay campaign 1">Replay</button> <button data-toast="Would overlay campaign 1 on the track record">Compare</button></td></tr>
+      </tbody>
+    </table>
+    <p class="note">Campaign 2 ran the same seasons with the Review Agent switched off. Comparing it with campaign 3 is the cleanest test of whether the coach helps.</p>
+  </div>
+</section>
+
+<div id="toast" role="status"></div>
+
+<script>
+// ---------- sample data ----------
+const seasons = [
+  {n:1,q:"2025 Q1",team:-0.8,spy:-4.3,quant:0.6,desk:-2.1,state:"done"},
+  {n:2,q:"2025 Q2",team:6.6,spy:10.6,quant:7.9,desk:5.4,state:"done"},
+  {n:3,q:"2025 Q3",team:9.5,spy:8.1,quant:10.2,desk:8.9,state:"done"},
+  {n:4,q:"2025 Q4",team:1.5,spy:1.4,quant:2.1,desk:0.9,state:"live"},
+  {n:5,q:"2026 Q1",state:"queued"},
+  {n:6,q:"2026 Q2",state:"queued"},
+];
+const weeksPer=[13,13,13,8];
+const levels=(key)=>{const out=[1];let v=1;seasons.slice(0,4).forEach(s=>{v*=1+s[key]/100;out.push(v)});return out;};
+const changes=[{week:13,ids:[1,2],text:"Changes 1 and 2 applied before S2: no dip buying in downtrends; focus on trend and volatility ideas"},
+               {week:26,ids:[3,4,5],text:"Changes 3, 4 and 5 before S3: desk max weight 0.30; re-entry lesson; critic bar raised to 0.8"},
+               {week:39,ids:[6,7],text:"Changes 6 and 7 before S4: critic bar reverted to 0.5; turnover lesson for the critic"}];
+function rng(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296}}
+function path(lv,seed,amp){const r=rng(seed);const out=[lv[0]];for(let s=0;s<weeksPer.length;s++){const a=lv[s],b=lv[s+1],n=weeksPer[s];const noise=[0];for(let i=1;i<=n;i++)noise.push(noise[i-1]+(r()-.5)*amp);for(let i=1;i<=n;i++){const t=i/n;out.push(a+(b-a)*t+(noise[i]-t*noise[n])*a)}}return out}
+const series=[
+  {key:"team",label:"Team",color:getComputedStyle(document.documentElement).getPropertyValue('--team').trim(),w:2.2,data:path(levels("team"),7,0.022)},
+  {key:"quant",label:"Quant book",color:getComputedStyle(document.documentElement).getPropertyValue('--quant').trim(),w:2,data:path(levels("quant"),11,0.024)},
+  {key:"desk",label:"Desk",color:getComputedStyle(document.documentElement).getPropertyValue('--desk').trim(),w:2,data:path(levels("desk"),23,0.028)},
+  {key:"spy",label:"SPY",color:getComputedStyle(document.documentElement).getPropertyValue('--spy').trim(),w:1.5,data:path(levels("spy"),5,0.026),ref:true},
+];
+const pct=(v,d=1)=>(v>0?"+":v<0?"−":"")+Math.abs(v).toFixed(d)+"%";
+const ns="http://www.w3.org/2000/svg";
+const el=(t,a={},txt)=>{const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;return e};
+
+// ---------- season ladder ----------
+(function(){
+  const box=document.getElementById("ladder");
+  seasons.forEach(s=>{
+    const d=document.createElement("div");d.className="s "+s.state;
+    let r="",svg="";
+    if(s.state==="queued"){r="<span class='q'>queued</span>";}
+    else{
+      r=`<div class='r'><b>Team ${pct(s.team)}</b><br><span class='q'>SPY ${pct(s.spy)}${s.state==="live"?", so far":""}</span></div>`;
+    }
+    d.innerHTML=`<div><div class='n'>S${s.n}</div><div class='q'>${s.q}</div></div>${r||"<div></div>"}`;
+    box.appendChild(d);
+  });
+})();
+
+// ---------- track record chart ----------
+function drawTrack(){
+  const svg=document.getElementById("track");const wrap=document.getElementById("trackwrap");const tip=document.getElementById("tracktip");
+  svg.innerHTML="";
+  const W=svg.clientWidth,H=svg.clientHeight,m={t:26,r:118,b:34,l:44};
+  const N=series[0].data.length;const xs=i=>m.l+(W-m.l-m.r)*i/(N-1);
+  let lo=Infinity,hi=-Infinity;series.forEach(s=>s.data.forEach(v=>{lo=Math.min(lo,v);hi=Math.max(hi,v)}));
+  lo=Math.floor((lo-1)*20)/20+1-0.02;hi=Math.ceil((hi-1)*20)/20+1+0.02;
+  const ys=v=>m.t+(H-m.t-m.b)*(1-(v-lo)/(hi-lo));
+  // grid
+  for(let g=Math.ceil((lo-1)/0.05)*0.05;g<=hi-1+1e-9;g+=0.05){const y=ys(1+g);svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:y,y2:y,class:"grid"}));svg.appendChild(el("text",{x:m.l-8,y:y+4,"text-anchor":"end"},(g>0?"+":"")+Math.round(g*100)+"%"));}
+  svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:ys(1),y2:ys(1),class:"axis"}));
+  // season bands + labels
+  let acc=0;weeksPer.forEach((n,i)=>{const x1=xs(acc),x2=xs(acc+n);if(i>0)svg.appendChild(el("line",{x1:x1,x2:x1,y1:m.t-4,y2:H-m.b,class:"axis"}));
+    svg.appendChild(el("text",{x:(x1+x2)/2,y:H-10,"text-anchor":"middle"},`S${i+1}  ${seasons[i].q}${i===3?", so far":""}`));acc+=n;});
+  // lines
+  series.forEach(s=>{const d=s.data.map((v,i)=>(i?"L":"M")+xs(i).toFixed(1)+","+ys(v).toFixed(1)).join(" ");
+    svg.appendChild(el("path",{d,fill:"none",stroke:s.color,"stroke-width":s.w,"stroke-linejoin":"round","stroke-linecap":"round"}));});
+  // end labels, nudged apart
+  const ends=series.map(s=>({s,y:ys(s.data[N-1]),v:s.data[N-1]})).sort((a,b)=>a.y-b.y);
+  for(let i=1;i<ends.length;i++)if(ends[i].y-ends[i-1].y<15)ends[i].y=ends[i-1].y+15;
+  ends.forEach(e=>{const t=el("text",{x:W-m.r+10,y:e.y+4,class:"lbl"});t.textContent=`${e.s.label} ${pct((e.v-1)*100)}`;svg.appendChild(t);svg.appendChild(el("circle",{cx:xs(N-1),cy:ys(e.v),r:3.5,fill:e.s.color,stroke:"#fff","stroke-width":1.5}))});
+  // change markers
+  changes.forEach(c=>{const x=xs(c.week);const g=el("g",{class:"marker"});g.appendChild(el("title",{},c.text));
+    c.ids.forEach((id,k)=>{const cx=x+10+k*18;g.appendChild(el("rect",{x:cx-8,y:4,width:16,height:16,rx:3,fill:"#1b2430"}));g.appendChild(el("text",{x:cx,y:16,"text-anchor":"middle",style:"fill:#fff;font-weight:600;font-size:11px"},id));});
+    g.appendChild(el("line",{x1:x,x2:x,y1:20,y2:m.t+2,stroke:"#1b2430","stroke-width":1.2}));svg.appendChild(g);});
+  // hover
+  const cross=el("line",{y1:m.t,y2:H-m.b,stroke:"#1b2430","stroke-width":1,opacity:0});svg.appendChild(cross);
+  const dots=series.map(s=>{const c=el("circle",{r:4,fill:s.color,stroke:"#fff","stroke-width":1.5,opacity:0});svg.appendChild(c);return c});
+  svg.onmousemove=e=>{const r=svg.getBoundingClientRect();const px=e.clientX-r.left;let i=Math.round((px-m.l)/(W-m.l-m.r)*(N-1));i=Math.max(0,Math.min(N-1,i));const x=xs(i);
+    cross.setAttribute("x1",x);cross.setAttribute("x2",x);cross.setAttribute("opacity",1);
+    series.forEach((s,k)=>{dots[k].setAttribute("cx",x);dots[k].setAttribute("cy",ys(s.data[i]));dots[k].setAttribute("opacity",1)});
+    let si=0,acc=0;for(let k=0;k<weeksPer.length;k++){if(i>acc+weeksPer[k]){acc+=weeksPer[k];si=k+1}else{si=k;break}}
+    tip.innerHTML=`<b>Season ${si+1}, week ${i-acc}</b><br>`+series.map(s=>`${s.label} ${pct((s.data[i]-1)*100)}`).join("<br>");
+    tip.style.display="block";const tw=tip.offsetWidth;tip.style.left=(x+14+tw>W?x-tw-14:x+14)+"px";tip.style.top=(e.clientY-r.top+40)+"px";};
+  svg.onmouseleave=()=>{tip.style.display="none";cross.setAttribute("opacity",0);dots.forEach(d=>d.setAttribute("opacity",0))};
+}
+
+// ---------- excess bars ----------
+function drawExcess(){
+  const svg=document.getElementById("excess");svg.innerHTML="";const W=svg.clientWidth,H=svg.clientHeight,m={t:14,r:10,b:26,l:36};
+  const vals=seasons.slice(0,4).map(s=>+(s.team-s.spy).toFixed(1));const maxA=5;const y0=m.t+(H-m.t-m.b)/2;const sc=(H-m.t-m.b)/2/maxA;
+  [-4,-2,0,2,4].forEach(g=>{const y=y0-g*sc;svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:y,y2:y,class:g?"grid":"axis"}));svg.appendChild(el("text",{x:m.l-6,y:y+4,"text-anchor":"end"},(g>0?"+":"")+g))});
+  const bw=Math.min(44,(W-m.l-m.r)/4*0.5);
+  vals.forEach((v,i)=>{const cx=m.l+(W-m.l-m.r)*(i+.5)/4;const h=Math.abs(v)*sc;const y=v>=0?y0-h:y0;
+    const r=el("rect",{x:cx-bw/2,y,width:bw,height:h,fill:"var(--team)",opacity:i===3?.45:1});
+    if(v>=0)r.setAttribute("rx",0);svg.appendChild(r);
+    // rounded data end: overlay a small rounded cap
+    svg.appendChild(el("rect",{x:cx-bw/2,y:v>=0?y:y+h-4,width:bw,height:4,rx:2,fill:"var(--team)",opacity:i===3?.45:1}));
+    svg.appendChild(el("text",{x:cx,y:v>=0?y-5:y+h+13,"text-anchor":"middle",class:"lbl"},(v>0?"+":v<0?"−":"")+Math.abs(v).toFixed(1)+(i===3?" so far":"")));
+    svg.appendChild(el("text",{x:cx,y:H-8,"text-anchor":"middle"},"S"+(i+1)));
+  });
+}
+
+// ---------- validation vs season sharpe ----------
+function drawPredict(){
+  const svg=document.getElementById("predict");svg.innerHTML="";const W=svg.clientWidth,H=svg.clientHeight,m={t:10,r:14,b:24,l:36};
+  const rows=[{s:"S1",val:1.42,real:0.3},{s:"S2",val:1.18,real:1.9},{s:"S3",val:0.95,real:2.4}];
+  const xs=v=>m.l+(W-m.l-m.r)*v/3;const ys=i=>m.t+(H-m.t-m.b)*(i+.5)/rows.length;
+  [0,1,2,3].forEach(g=>{svg.appendChild(el("line",{x1:xs(g),x2:xs(g),y1:m.t,y2:H-m.b,class:g?"grid":"axis"}));svg.appendChild(el("text",{x:xs(g),y:H-6,"text-anchor":"middle"},g))});
+  rows.forEach((r,i)=>{const y=ys(i);svg.appendChild(el("text",{x:m.l-8,y:y+4,"text-anchor":"end"},r.s));
+    svg.appendChild(el("line",{x1:xs(r.val),x2:xs(r.real),y1:y,y2:y,stroke:"var(--team)","stroke-width":2}));
+    svg.appendChild(el("circle",{cx:xs(r.val),cy:y,r:5,fill:"#fbfbfa",stroke:"var(--team)","stroke-width":2}));
+    svg.appendChild(el("circle",{cx:xs(r.real),cy:y,r:5,fill:"var(--team)"}));});
+  svg.appendChild(el("text",{x:W-m.r,y:m.t+8,"text-anchor":"end"},"Sharpe"));
+}
+
+// ---------- season sparkline ----------
+function drawSpark(){
+  const svg=document.getElementById("spark");svg.innerHTML="";const W=svg.clientWidth,H=svg.clientHeight;
+  const start=39;const N=weeksPer[3]+1;let lo=Infinity,hi=-Infinity;
+  const segs=series.map(s=>{const base=s.data[start];return{s,d:s.data.slice(start,start+N).map(v=>v/base)}});
+  segs.forEach(g=>g.d.forEach(v=>{lo=Math.min(lo,v);hi=Math.max(hi,v)}));
+  const xs=i=>6+(W-12)*i/(N-1),ys=v=>6+(H-12)*(1-(v-lo)/(hi-lo||1));
+  svg.appendChild(el("line",{x1:6,x2:W-6,y1:ys(1),y2:ys(1),class:"axis"}));
+  segs.forEach(g=>{svg.appendChild(el("path",{d:g.d.map((v,i)=>(i?"L":"M")+xs(i).toFixed(1)+","+ys(v).toFixed(1)).join(" "),fill:"none",stroke:g.s.color,"stroke-width":g.s.ref?1.5:2,"stroke-linejoin":"round"}))});
+  svg.appendChild(el("text",{x:6,y:H-1},"wk 1"));svg.appendChild(el("text",{x:W-6,y:H-1,"text-anchor":"end"},"wk 8"));
+}
+
+function drawAll(){drawTrack();drawExcess();drawPredict();drawSpark();}
+drawAll();addEventListener("resize",drawAll);
+
+// ---------- live feed ----------
+const feed=[
+ ["11:21:04","selector","Research","Quant book for season 4: <span class='act'>breakout_20d_volscale</span>, validation Sharpe 1.31, turnover 140% per year. Runner-up momo_12_1_volscale, 0.88."],
+ ["11:21:05","engine","Trading","Season 4 opens 1 Oct 2025. Desk starts with last season's weights: NVDA 0.20, MSFT 0.25, AAPL 0.20, TSLA 0.15, cash 0.20."],
+ ["11:24:10","trader","Trading","Week 1, 6 Oct. MSFT <span class='act'>HOLD</span> 0.25, confidence 0.61.<br><span class='why'>Above the 20, 50 and 200-day; one-month return +2%; nothing has changed.</span>"],
+ ["11:24:13","trader","Trading","Week 1, 6 Oct. TSLA <span class='act'>HOLD</span> 0.15, confidence 0.52.<br><span class='why'>Below the 20-day but above the 50-day; waiting for one more week.</span>"],
+ ["11:27:40","trader","Trading","Week 3, 20 Oct. AAPL <span class='act'>BUY</span> 0.20 to 0.25, confidence 0.66.<br><span class='why'>Broke above the 20-day high on rising volume; three-month return +11%; RSI 58.</span><details><summary>Snapshot the model saw</summary><pre>ticker: AAPL   as_of: 2025-10-20\ncloses_20d: 227.1 229.4 ... 236.8\nvs_sma20: +1.9%  vs_sma50: +4.2%  vs_sma200: +9.8%\nrsi14: 58   ret_1m: +3.1%  ret_3m: +11.0%  ret_12m: +19.4%\nvol_20d_ann: 21%   current_weight: 0.20   max_weight: 0.30</pre></details>"],
+ ["11:27:42","engine","Trading","Filled at the 21 Oct open. Cost 0.6 bp. Portfolio: 4 positions, cash 15%."],
+ ["11:33:02","trader","Trading","Week 5, 3 Nov. NVDA <span class='act'>HOLD</span> 0.20, confidence 0.58.<br><span class='why'>Still above all three averages; RSI 66 is high but lesson 1 is about oversold calls, not overbought ones.</span>"],
+ ["11:36:19","trader","Trading","Week 7, 17 Nov. NVDA <span class='act'>BUY</span> 0.20 to 0.30, confidence 0.72.<br><span class='why'>Above all three averages, three-month return +18%, RSI 61; trend intact. Max weight 0.30 under change 3.</span>"],
+ ["11:36:21","engine","Trading","Filled at the 18 Nov open. Cost 0.6 bp. Portfolio: 5 positions, cash 12%."],
+ ["11:39:50","trader","Trading","Week 8, 24 Nov. AAPL <span class='act'>HOLD</span> 0.25, confidence 0.55.<br><span class='why'>Sideways between the 20-day and 50-day; no new information.</span>"],
+ ["11:40:02","trader","Trading","Week 8, 24 Nov. TSLA <span class='act'>SELL</span> 0.15 to 0, confidence 0.68.<br><span class='why'>Closed below the 50-day two weeks running; one-month return −9%; lesson 1 says do not hold for a bounce.</span>"],
+ ["11:40:04","engine","Trading","Filled at the 25 Nov open. Cost 0.9 bp. Portfolio: 4 positions, cash 27%. Season so far: team +1.5%, SPY +1.4%."],
+ ["11:40:06","engine","Trading","Week 8 complete. Next decision: MSFT, week 9, 1 Dec."],
+];
+const rows=document.getElementById("rows");const labels={idea:"Idea Agent",coder:"Coder Agent",critic:"Critic Agent",trader:"Trader, momentum",review:"Review Agent",engine:"Engine",data:"Data Agent",selector:"Selector",sandbox:"Sandbox"};
+const earlier=[
+ ["11:14:30","idea","Research","Round 1, 3 hypotheses: breakout_20d_volscale (trend), sma20_50_pullback (trend), vol_target_spy (volatility). Mean reversion skipped under change 2."],
+ ["11:16:02","coder","Research","breakout_20d_volscale: 38 lines."],
+ ["11:16:03","sandbox","Research","Compiled. No imports, no file access. Lookahead test passed: signals identical with the future withheld."],
+ ["11:16:05","engine","Research","Backtest. Train Sharpe 1.08, validation Sharpe 1.31, turnover 140% per year, max drawdown −9.1%."],
+ ["11:16:40","critic","Research","<span class='act'>KEEP</span>. <span class='why'>Positive in 5 of 6 validation sub-periods. Turnover is inside the 300% limit from lesson 7. Watch concentration: top position averages 28%.</span>"],
+ ["11:18:12","coder","Research","sma20_50_pullback: 29 lines."],
+ ["11:18:13","sandbox","Research","Rejected: uses prices.shift(-1). Sent back to the Coder Agent with the line number."],
+ ["11:18:50","coder","Research","sma20_50_pullback, attempt 2: 31 lines."],
+ ["11:18:51","sandbox","Research","Compiled and lookahead test passed."],
+ ["11:18:53","engine","Research","Backtest. Train Sharpe 0.72, validation Sharpe 0.41, turnover 360% per year."],
+ ["11:19:30","critic","Research","<span class='act'>DISCARD</span>. <span class='why'>Validation turnover 360% exceeds the limit in lesson 7; most of the edge goes to costs.</span>"],
+];
+function addRow(e,fresh){const d=document.createElement("div");d.className="row"+(fresh?" new":"");d.dataset.phase=e[2];d.innerHTML=`<time>${e[0]}</time><span><span class="tag ${e[1]}">${labels[e[1]]}</span></span><div class="msg">${e[3]}</div>`;rows.appendChild(d);}
+earlier.forEach(e=>addRow(e,false));
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+let i=0,following=true;const feedEl=document.querySelector(".feed");
+function tick(){if(i>=feed.length)return;addRow(feed[i++],true);if(following)feedEl.scrollTop=feedEl.scrollHeight;if(!reduce)setTimeout(tick,1300+Math.random()*900);else tick();}
+if(reduce){feed.forEach(e=>addRow(e,false));}else{feedEl.scrollTop=feedEl.scrollHeight;setTimeout(tick,900);}
+feedEl.addEventListener("scroll",()=>{following=feedEl.scrollHeight-feedEl.scrollTop-feedEl.clientHeight<40;document.getElementById("follow").classList.toggle("on",following);document.getElementById("follow").textContent=following?"Following":"Scroll to bottom to follow";});
+document.querySelectorAll(".feedhead .chip:not(#follow)").forEach(c=>c.addEventListener("click",()=>{document.querySelectorAll(".feedhead .chip:not(#follow)").forEach(x=>x.classList.remove("on"));c.classList.add("on");const f=c.textContent;document.querySelectorAll(".row").forEach(r=>r.style.display=(f==="All"||r.dataset.phase===f)?"":"none");}));
+
+// ---------- tabs + toasts ----------
+document.querySelectorAll(".tabbar button").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".tabbar button").forEach(x=>x.classList.remove("on"));b.classList.add("on");document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("on",p.id==="tab-"+b.dataset.tab));if(b.dataset.tab==="progress")drawAll();history.replaceState(null,"","#"+b.dataset.tab);}));
+{const hb=document.querySelector('.tabbar button[data-tab="'+location.hash.slice(1)+'"]');if(hb)hb.click();}
+const toast=document.getElementById("toast");let tt;
+document.querySelectorAll("[data-toast]").forEach(b=>b.addEventListener("click",()=>{toast.textContent=b.dataset.toast;toast.style.display="block";clearTimeout(tt);tt=setTimeout(()=>toast.style.display="none",2200);if(b.parentElement.classList.contains("switch")){b.parentElement.querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");}}));
+</script>
+</body>
+</html>
