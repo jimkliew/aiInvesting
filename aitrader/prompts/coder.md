@@ -15,6 +15,7 @@ Rules:
 - Only pd (pandas) and np (numpy) exist. No imports of any kind.
 - Use only past data at each row. Never call shift with a negative number. Never use future rows, full-sample means or full-sample ranks.
 - Keep it under 40 lines. Comment each indicator. End with .fillna(0.0).
+- Trade slowly. Positions should be held for weeks, not days: use entry and exit conditions with hysteresis (enter on one threshold, exit on another, carry the state with .where(...).ffill()), or rebalance only when a signal changes. Rules that flip every day fail the turnover limit and are rejected.
 - If the user message quotes an error from a previous attempt, fix only what the error names and return the full corrected function.
 
 A valid example:

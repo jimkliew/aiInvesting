@@ -6,6 +6,7 @@ for personal and educational purposes and expect the occasional gap.
 from __future__ import annotations
 
 import time
+import warnings
 from pathlib import Path
 
 import pandas as pd
@@ -13,6 +14,8 @@ import pandas as pd
 
 def _download(ticker: str, start: str, end: str | None, retries: int = 3) -> pd.Series:
     import yfinance as yf  # imported lazily so tests without network never touch it
+
+    warnings.filterwarnings("ignore")
 
     last_err: Exception | None = None
     for attempt in range(retries):

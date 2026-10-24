@@ -17,6 +17,6 @@ def select(candidates: list[dict], params, previous_book: dict | None) -> tuple[
     if ok:
         best = max(ok, key=lambda e: e["val"]["sharpe"])
         return best, False
-    if previous_book and previous_book.get("code"):
+    if previous_book and previous_book.get("name"):
         return previous_book, True
     return None, True

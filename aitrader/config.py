@@ -64,11 +64,11 @@ DEFAULT_PARAMS: dict[str, Any] = {
     "critic.min_val_sharpe": 0.50,
     "research.rounds": 1,
     "research.ideas_per_round": 4,
-    "desk.rebalance": "weekly",
+    "desk.rebalance": "monthly",
     "selector.max_turnover": 300,
     "family_focus": {"emphasise": [], "avoid": []},
-    "budget.max_llm_calls": 60,
-    "budget.max_minutes": 15,
+    "budget.max_llm_calls": 120,
+    "budget.max_minutes": 20,
     "budget.max_strategies": 8,
 }
 

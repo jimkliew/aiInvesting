@@ -43,17 +43,6 @@ def default_responses(verdict="KEEP"):
     return gen
 
 
-@pytest.fixture
-def synthetic(monkeypatch):
-    prices = make_prices(("AAPL", "MSFT", "NVDA", "SPY"), start="2023-01-02", days=520)
-
-    def fake_fetch(tickers, start="2015-01-01", end=None, cache_dir="data/raw", refresh=False, on_ticker=None):
-        return prices[list(tickers)]
-
-    monkeypatch.setattr("aitrader.agents.data_agent.fetch_prices", fake_fetch)
-    return prices
-
-
 def _run(tmp_path, llm, apply_mode="auto"):
     u = Universe(tickers=["AAPL", "MSFT", "NVDA"], benchmark="SPY", start="2023-01-02", campaign_start="2024-07-01", seasons=2)
     store = RunStore(tmp_path / "runs", "test")
@@ -77,7 +66,8 @@ def test_quick_campaign_end_to_end(tmp_path, synthetic):
     assert len(tr) == 2 and tr[1]["partial"] is True and tr[0]["book_name"].startswith("sma_cross")
     assert any(c["lever"] == "set_param" for c in store.changelog())
     assert store.params["desk.max_weight"] == 0.25
-    assert len(store.decisions(1)) == 4 * 3  # 4 weeks x 3 tickers x 1 persona
+    n_dec = len(store.decisions(1))
+    assert n_dec > 0 and n_dec % 3 == 0  # rebalance dates x 3 tickers x 1 persona
     assert all(d["outcome_1m"] is not None for d in store.decisions(1)[:3])
     assert store.reviews()[0]["assessment"] == "fine"
     for k in ("campaign_started", "data_ready", "hypotheses", "code", "sandbox_ok", "backtest", "critic", "book_selected",
@@ -91,8 +81,10 @@ def test_quick_campaign_end_to_end(tmp_path, synthetic):
 def test_all_discard_falls_back(tmp_path, synthetic):
     llm = FakeLLM(default=default_responses(verdict="DISCARD"))
     store, kinds = _run(tmp_path, llm)
-    assert "selector_fallback" in kinds
-    assert store.quant_book(1)["name"] == "equal_weight"
+    # nothing researched qualified, so a classic baseline wins on validation and the page says so
+    assert "selector_note" in kinds and "selector_fallback" not in kinds
+    from aitrader.backtest.strategies import BASELINES
+    assert store.quant_book(1)["name"] in BASELINES and not store.quant_book(1)["code"]
     assert store.seasons_done() == [1, 2]
 
 

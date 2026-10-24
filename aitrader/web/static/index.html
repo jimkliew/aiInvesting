@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Trading Lab, Mission Control</title>
+<style>
+:root{
+  --paper:#f4f5f3; --panel:#fbfbfa; --rule:#d6dad2; --rule-2:#e6e9e3;
+  --ink:#1b2430; --ink-2:#56606e; --ink-3:#8a929d;
+  --accent:#1c5cab; --accent-hover:#184f95; --accent-soft:#e3edf9; --on-accent:#fff;
+  --team:#2a78d6; --quant:#eb6834; --desk:#1baf7a; --spy:#52514e;
+  --good:#0ca30c; --warn:#fab219; --serious:#ec835a; --crit:#d03b3b;
+  --font:"Avenir Next","Segoe UI",system-ui,sans-serif;
+  --cond:"Avenir Next Condensed","Arial Narrow","Avenir Next",system-ui,sans-serif;
+  --mono:"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font:14px/1.45 var(--font);color:var(--ink);background:var(--paper);display:flex;flex-direction:column;min-height:100vh}
+button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:6px 12px;cursor:pointer;white-space:nowrap}
+button:hover{border-color:var(--ink-3)}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+button.primary:hover{background:var(--accent-hover)}
+input,select,textarea{font:inherit;color:var(--ink);border:1px solid var(--rule);border-radius:4px;padding:5px 8px;background:#fff}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th{font-weight:600;color:var(--ink-2);text-align:left;padding:6px 10px;border-bottom:1px solid var(--rule)}
+td{padding:7px 10px;border-bottom:1px solid var(--rule-2);vertical-align:top}
+td.num,th.num{text-align:right;white-space:nowrap}
+.sign{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.sign.up{background:var(--good)} .sign.down{background:var(--crit)}
+h1,h2,h3{margin:0;font-weight:600}
+h2{font-size:15px}
+h3{font-size:13px;color:var(--ink-2)}
+code{font:12px var(--mono)}
+
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 22px;padding:10px 18px;border-bottom:1px solid var(--rule);background:var(--panel)}
+.brand{font-size:17px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
+.brand span{color:var(--ink-2);font-weight:400;margin-left:8px}
+.status{list-style:none;margin:0;padding:0;display:flex;gap:16px;color:var(--ink-2);flex:1;flex-wrap:nowrap}
+.status li{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ink-3);display:inline-block}
+.dot.ok{background:var(--good)} .dot.bad{background:var(--crit)} .dot.busy{background:var(--accent)}
+.controls{display:flex;gap:6px;align-items:center;margin-left:auto}
+.form{position:absolute;right:18px;top:58px;background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:14px;box-shadow:0 12px 32px rgba(27,36,48,.18);z-index:7;display:none;width:360px}
+.form.on{display:block}
+.form label{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:6px 0;font-size:13px}
+.form .row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+
+.now{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--rule);background:var(--paper)}
+.now > div{padding:8px 18px;border-right:1px solid var(--rule-2)}
+.now > div:last-child{border-right:0}
+.now b{display:block;font-weight:600}
+.now span{color:var(--ink-2);font-size:13px}
+.meter{height:5px;background:var(--rule-2);border-radius:3px;margin-top:6px;overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:var(--accent)}
+
+.work{display:grid;grid-template-columns:230px 1fr 330px;height:46vh;min-height:330px;border-bottom:1px solid var(--rule)}
+.work > *{min-height:0;overflow:auto}
+.rail{border-right:1px solid var(--rule);padding:10px 0;background:var(--panel)}
+.rail h3{padding:0 14px 8px}
+.s{display:grid;grid-template-columns:56px 1fr;gap:0 8px;align-items:center;padding:8px 14px 8px 11px;border-left:3px solid transparent}
+.s.done .n{color:var(--ink-2)}
+.s.live{border-left-color:var(--accent);background:var(--accent-soft)}
+.s.queued{color:var(--ink-3)}
+.s .n{font:600 18px var(--cond)}
+.s .q{font-size:12px;color:var(--ink-2)}
+.s .r{font-size:13px;line-height:1.3}
+.s .r b{font-weight:600}
+
+.feed{display:flex;flex-direction:column;background:var(--paper)}
+.feedhead{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--rule-2);position:sticky;top:0;background:var(--paper);z-index:1}
+.feedhead h2{margin-right:auto}
+.chip{border:1px solid var(--rule);border-radius:12px;padding:2px 10px;font-size:12px;background:transparent;color:var(--ink-2)}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.rows{padding:4px 0 10px;font:12.5px/1.5 var(--mono)}
+.empty{padding:28px 14px;color:var(--ink-3);font:13px var(--font)}
+.row{display:grid;grid-template-columns:62px 124px 1fr;gap:10px;padding:5px 14px;border-bottom:1px solid var(--rule-2);align-items:start}
+.row.new{animation:in .35s ease-out}
+.row.divider{grid-template-columns:1fr;padding:3px 14px;color:var(--ink-3);font:11.5px var(--font);background:var(--panel)}
+@keyframes in{from{background:var(--accent-soft)}to{background:transparent}}
+.row time{color:var(--ink-3)}
+.tag{display:inline-block;font:600 11px/1.6 var(--font);padding:0 7px;border-radius:3px;white-space:nowrap;color:var(--ink)}
+.tag.idea{background:#e9e4fb}.tag.coder{background:#fde8dc}.tag.critic{background:#fff1c8}.tag.trader{background:#dcecfb}
+.tag.review{background:#fbe0ea}.tag.engine{background:#e4e7e2}.tag.data{background:#d9f3e8}.tag.selector{background:#e4e7e2}.tag.sandbox{background:#e4e7e2}.tag.scorer{background:#e4e7e2}.tag.error{background:#fde0e0}
+.msg{white-space:pre-wrap;word-break:break-word}
+.msg .act{font-weight:700}
+.msg details{margin-top:3px}
+.msg summary{cursor:pointer;color:var(--accent);font:12px var(--font)}
+.msg pre{margin:4px 0 0;padding:8px;background:var(--panel);border:1px solid var(--rule-2);border-radius:4px;overflow:auto;max-height:260px}
+
+.season{border-left:1px solid var(--rule);padding:12px 16px;background:var(--panel)}
+.season h2{margin-bottom:2px}
+.season .sub{color:var(--ink-2);font-size:13px;margin-bottom:10px}
+.figs{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-bottom:10px}
+.fig{border-top:1px solid var(--rule-2);padding-top:6px}
+.fig small{display:flex;align-items:center;gap:6px;color:var(--ink-2);font-size:12px}
+.fig small i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.fig b{display:block;font:600 30px/1.1 var(--cond);letter-spacing:-.01em}
+.spark{width:100%;height:84px;display:block;margin:4px 0 8px}
+.mini td,.mini th{padding:4px 6px;font-size:12.5px}
+
+.tabs{flex:1;display:flex;flex-direction:column;min-height:0}
+.tabbar{display:flex;gap:2px;padding:0 12px;border-bottom:1px solid var(--rule);background:var(--panel);flex-wrap:wrap}
+.tabbar button{border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;padding:10px 12px;color:var(--ink-2);font-weight:500}
+.tabbar button.on{color:var(--ink);border-bottom-color:var(--accent)}
+.panel{display:none;padding:16px 18px 28px;overflow:auto}
+.panel.on{display:block}
+
+.score{display:grid;grid-template-columns:repeat(6,1fr);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin-bottom:18px}
+.score > div{padding:10px 14px 12px;border-right:1px solid var(--rule-2)}
+.score > div:last-child{border-right:0}
+.score small{color:var(--ink-2);font-size:12.5px;display:block}
+.score b{font:600 34px/1.1 var(--cond);letter-spacing:-.01em}
+.score b em{font:500 15px var(--font);color:var(--ink-2);margin-left:4px}
+
+.grid2{display:grid;grid-template-columns:2fr 1fr;gap:26px;align-items:start}
+.chart{position:relative}
+.chart h2{margin-bottom:2px}
+.chart .lead{color:var(--ink-2);font-size:13px;margin-bottom:8px;max-width:70ch}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--ink-2);margin:4px 0 2px}
+.legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
+.legend i.ref{height:2px}
+.legend i.tri{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-radius:0}
+.legend i.tri.in{border-bottom:10px solid var(--good)} .legend i.tri.out{border-top:10px solid var(--crit)}
+.legend i.band{width:14px;height:10px;background:var(--accent-soft)}
+svg text{font-family:var(--font);font-size:11.5px;fill:var(--ink-2)}
+svg .lbl{font-weight:600;fill:var(--ink)}
+svg .grid{stroke:var(--rule-2)}
+svg .axis{stroke:var(--rule)}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:#fff;font-size:12px;padding:6px 9px;border-radius:4px;white-space:nowrap;display:none;z-index:2;font-variant-numeric:tabular-nums;line-height:1.4}
+.tip b{font-weight:600}
+.note{font-size:12.5px;color:var(--ink-2);max-width:72ch}
+
+.card{border-top:1px solid var(--rule);padding:12px 0 14px;max-width:1080px}
+.card h2{display:flex;gap:12px;align-items:baseline}
+.card h2 small{font-weight:400;color:var(--ink-2);font-size:13px}
+.card p{margin:6px 0;max-width:80ch}
+.rec{display:grid;grid-template-columns:28px 1fr 150px;gap:10px;padding:8px 0;border-top:1px solid var(--rule-2)}
+.rec .id{font:600 16px var(--cond);color:var(--ink-2)}
+.rec code{background:var(--panel);border:1px solid var(--rule-2);padding:0 4px;border-radius:3px}
+.rec .st{font-size:12.5px;color:var(--ink-2);text-align:right}
+.rec .st::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.rec .st.applied::before{background:var(--good)} .rec .st.reverted::before{background:var(--serious)} .rec .st.pending::before{background:var(--warn)} .rec .st.rejected::before{background:var(--crit)}
+.rec .btns{display:flex;gap:6px;justify-content:flex-end;margin-top:4px}
+.rec .btns button{padding:2px 8px;font-size:12px}
+.code{font:12px/1.5 var(--mono);background:var(--panel);border:1px solid var(--rule-2);padding:10px 12px;border-radius:4px;overflow:auto;white-space:pre;tab-size:4;max-height:420px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.verdict{font-weight:600}
+.verdict::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.verdict.keep::before,.verdict.kept::before,.verdict.active::before{background:var(--good)} .verdict.discard::before,.verdict.discarded::before,.verdict.reverted::before{background:var(--serious)} .verdict.failed::before{background:var(--crit)}
+
+.proc{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 26px;max-width:1200px}
+.proc > div{border-top:1px solid var(--rule);padding:10px 0}
+.proc h2{display:flex;align-items:center;gap:8px}
+.proc .st{font-size:12.5px;color:var(--ink-2);margin:2px 0 6px}
+.proc dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:12.5px}
+.proc dt{color:var(--ink-2)} .proc dd{margin:0;font-variant-numeric:tabular-nums;word-break:break-all}
+.strat-head{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;margin-bottom:12px}
+.strat-head p{margin:4px 0;max-width:70ch}
+.tickers{display:flex;gap:6px;margin:6px 0 10px;flex-wrap:wrap}
+textarea.prompt{width:100%;min-height:320px;font:12px/1.5 var(--mono)}
+
+.walk{position:fixed;right:18px;bottom:18px;width:470px;max-height:74vh;overflow:auto;background:var(--panel);border:1px solid var(--rule);border-radius:6px;box-shadow:0 12px 32px rgba(27,36,48,.18);z-index:6;display:none}
+.walk.on{display:block}
+.walk header{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--rule-2);position:sticky;top:0;background:var(--panel)}
+.walk header .n{font:600 13px var(--font);color:var(--ink-2);margin-right:auto}
+.walk header button{padding:2px 8px;font-size:12px}
+.walk .body{padding:12px 14px 14px}
+.walk h2{font-size:16px;margin-bottom:6px}
+.walk p{margin:0 0 8px;max-width:60ch}
+.walk h3{margin:12px 0 4px}
+.walk .code{font-size:11.5px;max-height:220px}
+.walk footer{display:flex;gap:8px;align-items:center;padding:10px 14px;border-top:1px solid var(--rule-2);position:sticky;bottom:0;background:var(--panel)}
+.walk footer .bar{flex:1;height:4px;background:var(--rule-2);border-radius:2px;overflow:hidden}
+.walk footer .bar i{display:block;height:100%;background:var(--accent)}
+.spot{outline:3px solid var(--accent);outline-offset:-3px;box-shadow:0 0 0 5px var(--accent-soft);position:relative;z-index:2}
+
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 14px;border-radius:4px;font-size:13px;display:none;z-index:9;max-width:70vw}
+@media (max-width:1520px){.status li.hide-narrow{display:none}}
+@media (max-width:1100px){.work{grid-template-columns:200px 1fr}.season{grid-column:1/-1;border-left:0;border-top:1px solid var(--rule)}.score{grid-template-columns:repeat(3,1fr)}.grid2,.two,.strat-head{grid-template-columns:1fr}.now{grid-template-columns:repeat(3,1fr)}.proc{grid-template-columns:1fr 1fr}.walk{width:calc(100% - 36px)}}
+@media (prefers-reduced-motion:reduce){.row.new{animation:none}}
+</style>
+</head>
+<body>
+
+<header class="top" id="hdr">
+  <h1 class="brand">AI Trading Lab <span>Mission Control</span></h1>
+  <ul class="status">
+    <li id="st-ollama"><i class="dot"></i><span>Ollama</span></li>
+    <li id="st-data" class="hide-narrow"><i class="dot"></i><span>Data</span></li>
+    <li id="st-campaign"><span>No campaign</span></li>
+  </ul>
+  <div class="controls">
+    <button id="walkbtn">Walkthrough</button>
+    <button class="primary" id="runbtn">Run campaign</button>
+    <button id="pausebtn" disabled>Pause</button>
+    <button id="stepbtn" disabled>Step</button>
+    <button id="stopbtn" disabled>Stop</button>
+  </div>
+  <div class="form" id="runform">
+    <h2>Run a campaign</h2>
+    <label>Seasons (quarters) <input id="f-seasons" type="number" min="1" max="12" value="6" style="width:80px"></label>
+    <label>Personas <span><label style="display:inline;margin:0 6px 0 0"><input type="checkbox" class="f-persona" value="momentum" checked> momentum</label><label style="display:inline;margin:0 6px 0 0"><input type="checkbox" class="f-persona" value="contrarian"> contrarian</label><label style="display:inline;margin:0"><input type="checkbox" class="f-persona" value="risk_averse"> risk averse</label></span></label>
+    <label>Coach changes <select id="f-apply"><option value="auto">Apply automatically</option><option value="approve">Ask me first</option></select></label>
+    <label>Quick mode (3 tickers, 1 idea, 4 weeks) <input id="f-quick" type="checkbox"></label>
+    <label>Data Agent uses the model <input id="f-llmdata" type="checkbox" checked></label>
+    <label>Model <input id="f-model" type="text" value="qwen3:8b" style="width:160px"></label>
+    <div class="row"><button id="f-cancel">Cancel</button><button class="primary" id="f-start">Start</button></div>
+  </div>
+</header>
+
+<section class="now" id="now">
+  <div><b id="now-season">No season</b><span id="now-season-sub">Start a campaign or open a run</span></div>
+  <div><b id="now-phase">Idle</b><span id="now-phase-sub">&nbsp;</span></div>
+  <div><b id="now-agent">No agent active</b><span id="now-agent-sub">&nbsp;</span></div>
+  <div><b id="now-budget">LLM calls 0 of 0</b><div class="meter"><i id="now-meter"></i></div></div>
+  <div><b id="now-time">0.0 min</b><span>this season</span></div>
+</section>
+
+<main class="work">
+  <aside class="rail" id="rail" aria-label="Seasons">
+    <h3>Seasons, team vs SPY</h3>
+    <div id="ladder"><div class="empty">No seasons yet</div></div>
+  </aside>
+  <section class="feed" id="feedpane" aria-label="Live agent feed">
+    <div class="feedhead">
+      <h2 id="feedtitle">Live feed</h2>
+      <button class="chip on" data-f="All">All</button><button class="chip" data-f="Data">Data</button><button class="chip" data-f="Research">Research</button><button class="chip" data-f="Trading">Trading</button><button class="chip" data-f="Review">Review</button>
+      <button class="chip" id="follow">Following</button>
+    </div>
+    <div class="rows" id="rows"><div class="empty">Waiting for events. Start a campaign, open a previous run, or replay one from the Runs tab.</div></div>
+  </section>
+  <aside class="season" id="seasonpane" aria-label="This season">
+    <h2 id="ts-title">Season</h2>
+    <div class="sub" id="ts-sub">Nothing scored yet</div>
+    <div class="figs">
+      <div class="fig"><small><i style="background:var(--team)"></i>Team</small><b id="ts-team">–</b></div>
+      <div class="fig"><small><i style="background:var(--spy)"></i>SPY</small><b id="ts-spy">–</b></div>
+      <div class="fig"><small><i style="background:var(--quant)"></i>Quant book</small><b id="ts-book">–</b></div>
+      <div class="fig"><small><i style="background:var(--desk)"></i>Desk</small><b id="ts-desk">–</b></div>
+    </div>
+    <svg class="spark" id="spark" role="img" aria-label="This season's equity"></svg>
+    <table class="mini"><thead><tr><th>Strategy</th><th class="num">Val Sharpe</th><th class="num">Season</th></tr></thead><tbody id="ts-lb"></tbody></table>
+  </aside>
+</main>
+
+<section class="tabs">
+  <div class="tabbar" role="tablist">
+    <button class="on" data-tab="progress">Progress</button>
+    <button data-tab="strategy">Strategy</button>
+    <button data-tab="season">Season</button>
+    <button data-tab="notebook">Notebook</button>
+    <button data-tab="desk">Desk</button>
+    <button data-tab="reviews">Reviews</button>
+    <button data-tab="changelog">Changelog</button>
+    <button data-tab="prompts">Prompts</button>
+    <button data-tab="processes">Processes</button>
+    <button data-tab="runs">Runs</button>
+  </div>
+
+  <div class="panel on" id="tab-progress">
+    <div class="score" id="scorecard"></div>
+    <div class="grid2">
+      <div class="chart" id="trackwrap">
+        <h2>Track record, out of sample</h2>
+        <div class="lead">Growth of 1.00 across seasons the team had not yet seen. Numbered flags mark where a coach change took effect. Hover for daily values.</div>
+        <div class="legend"><span><i style="background:var(--team)"></i>Team, half quant book and half desk</span><span><i style="background:var(--quant)"></i>Quant book</span><span><i style="background:var(--desk)"></i>Desk</span><span><i class="ref" style="background:var(--spy)"></i>SPY</span></div>
+        <svg id="track" role="img" style="width:100%;height:340px;display:block"></svg>
+        <div class="tip" id="tracktip"></div>
+      </div>
+      <div>
+        <div class="chart"><h2>Excess return by season</h2><div class="lead">Team minus SPY, in percentage points.</div><svg id="excess" style="width:100%;height:170px;display:block"></svg></div>
+        <div class="chart" style="margin-top:18px"><h2>Did validation predict the season?</h2><div class="lead">Sharpe of the chosen quant book on its validation year (hollow) and on the season it then traded (filled).</div><svg id="predict" style="width:100%;height:150px;display:block"></svg></div>
+      </div>
+    </div>
+    <h2 style="margin:22px 0 6px">Season by season</h2>
+    <table><thead><tr><th>Season</th><th>Quant book</th><th class="num">Val Sharpe</th><th class="num">Season Sharpe</th><th class="num">Team</th><th class="num">SPY</th><th class="num">Excess</th><th class="num">Book</th><th class="num">Desk</th><th>Changes applied after</th></tr></thead><tbody id="seasontable"></tbody></table>
+    <p class="note" style="margin-top:10px">A handful of seasons cannot separate skill from luck. The question is whether the loop measures the right things and whether the coach's changes can be traced to an effect.</p>
+  </div>
+
+  <div class="panel" id="tab-strategy">
+    <div class="strat-head">
+      <div>
+        <h2 id="strat-title">Quant book</h2>
+        <p id="strat-idea" class="note"></p>
+        <p id="strat-meta" class="note"></p>
+        <h3 style="margin-top:10px">Indicators available to every strategy</h3>
+        <table><tbody>
+          <tr><td>ret_1d</td><td>daily simple return</td></tr><tr><td>sma20, sma50, sma200</td><td>moving averages of close</td></tr>
+          <tr><td>rsi14</td><td>14-day RSI, 0 to 100</td></tr><tr><td>vol20</td><td>20-day realised volatility, annualised</td></tr>
+          <tr><td>mom_12_1</td><td>12-month return skipping the last month</td></tr><tr><td>high20</td><td>previous 20-day high, today excluded</td></tr><tr><td>drawdown</td><td>close over running max, minus one</td></tr>
+        </tbody></table>
+      </div>
+      <div><h3>generate_signals, as the Coder Agent wrote it</h3><div class="code" id="strat-code">No quant book yet.</div></div>
+    </div>
+    <div class="chart" id="pricewrap">
+      <h2>One ticker: price, averages, the book's position and its sleeve</h2>
+      <div class="lead">Validation year plus the season. Shaded bands are days the quant book held the name. Below the price: the weight it assigned, then the sleeve's growth against holding the stock at the book's maximum weight.</div>
+      <div class="tickers" id="tickers"></div>
+      <div class="legend"><span><i style="background:var(--ink)"></i>Close</span><span><i style="background:var(--team)"></i>sma20</span><span><i style="background:var(--quant)"></i>sma50</span><span><i class="ref" style="background:var(--ink-3)"></i>high20</span><span><i class="tri in"></i>Entry</span><span><i class="tri out"></i>Exit</span><span><i class="band"></i>Held</span></div>
+      <svg id="price" style="width:100%;height:520px;display:block"></svg>
+      <div class="tip" id="pricetip"></div>
+    </div>
+    <h2 id="tradeshead" style="margin-top:14px">Trades</h2>
+    <table id="trades"><thead><tr><th>Entry</th><th>Exit</th><th class="num">Days</th><th class="num">Weight</th><th class="num">Return</th></tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="panel" id="tab-season">
+    <h2 id="season-h">Leaderboard</h2>
+    <p class="note">Validation Sharpe was known before the season. Season returns are out of sample.</p>
+    <table><thead><tr><th>Strategy</th><th>Kind</th><th class="num">Val Sharpe</th><th class="num">Season return</th></tr></thead><tbody id="season-lb"></tbody></table>
+  </div>
+
+  <div class="panel" id="tab-notebook">
+    <h2>Lab notebook, every strategy the team has tried</h2>
+    <p class="note">Carried across seasons. The Idea Agent reads this before proposing, so it does not repeat itself.</p>
+    <table><thead><tr><th>Season</th><th>Strategy</th><th>Family</th><th>Idea</th><th class="num">Train Sharpe</th><th class="num">Val Sharpe</th><th class="num">Turnover</th><th>Critic</th><th>Status</th><th>Code</th></tr></thead><tbody id="nb"></tbody></table>
+  </div>
+
+  <div class="panel" id="tab-desk">
+    <h2>Trading desk, every weekly decision</h2>
+    <p class="note">The persona sees only data up to the decision date. The engine fills at the next open. The one-month outcome is filled in after the fact for the coach.</p>
+    <table><thead><tr><th>Season</th><th>Week</th><th>Date</th><th>Persona</th><th>Ticker</th><th>Action</th><th class="num">Weight</th><th class="num">Conf.</th><th>Stated reason</th><th class="num">1-month outcome</th></tr></thead><tbody id="desk"></tbody></table>
+  </div>
+
+  <div class="panel" id="tab-reviews">
+    <h2>Coach's reviews</h2>
+    <p class="note">After each season the Review Agent reads the scorecard, the track record, the changelog, the notebook and the desk's best and worst decisions. It may only recommend changes from the lever menu.</p>
+    <div id="pending"></div>
+    <div id="reviews"></div>
+  </div>
+
+  <div class="panel" id="tab-changelog">
+    <h2>Changelog, what changed between seasons and why</h2>
+    <table><thead><tr><th class="num">Change</th><th>After season</th><th>Lever</th><th>Target</th><th>Change</th><th>Rationale</th><th>Source</th><th>Status</th></tr></thead><tbody id="changelog"></tbody></table>
+  </div>
+
+  <div class="panel" id="tab-prompts">
+    <div class="two">
+      <div>
+        <h2>Prompts and lessons per agent</h2>
+        <p class="note">Each agent has one prompt file. Lessons the coach adds are appended as a separate block at call time. Manual edits are logged in the changelog.</p>
+        <table><thead><tr><th>Agent</th><th class="num">Words</th><th class="num">Lessons</th></tr></thead><tbody id="promptlist"></tbody></table>
+      </div>
+      <div>
+        <h2 id="prompt-name">Select an agent</h2>
+        <textarea class="prompt" id="prompt-text"></textarea>
+        <div id="prompt-lessons" class="note" style="margin-top:6px"></div>
+        <div style="margin-top:8px;display:flex;gap:6px"><button id="prompt-save" disabled>Save prompt</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="tab-processes">
+    <h2>What is running in the background</h2>
+    <p class="note">Everything is on this machine. Nothing leaves it; nothing needs a key.</p>
+    <div class="proc" id="procgrid"></div>
+  </div>
+
+  <div class="panel" id="tab-runs">
+    <h2>Campaigns</h2>
+    <p class="note">Open a run to browse it in every tab. Replay streams its recorded events into the feed at the chosen speed.</p>
+    <div style="margin:8px 0">Replay speed <select id="replayspeed"><option value="1">1x</option><option value="5" selected>5x</option><option value="20">20x</option><option value="0">instant</option></select> <button id="livebtn" style="display:none">Back to live</button></div>
+    <table><thead><tr><th>Campaign</th><th>Model</th><th>Seasons</th><th>Personas</th><th>Coach</th><th class="num">Team</th><th class="num">SPY</th><th></th></tr></thead><tbody id="runs"></tbody></table>
+  </div>
+</section>
+
+<aside class="walk" id="walk" aria-label="Walkthrough">
+  <header><span class="n" id="walk-n">Walkthrough</span><button id="walk-skip">Skip to live view</button></header>
+  <div class="body"><h2 id="walk-title"></h2><div id="walk-body"></div><h3>Code running at this step</h3><div class="code" id="walk-code"></div></div>
+  <footer><button id="walk-back">Back</button><div class="bar"><i id="walk-bar"></i></div><button class="primary" id="walk-next">Next</button></footer>
+</aside>
+
+<div id="toast" role="status"></div>
+
+<script>
+// ---------- helpers ----------
+const $=id=>document.getElementById(id);
+const ns="http://www.w3.org/2000/svg";
+const el=(t,a={},txt)=>{const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;return e};
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const pct=(v,d=1)=>(v>0?"+":v<0?"−":"")+Math.abs(v).toFixed(d)+"%";
+const fpct=(v,d=1)=>v==null||isNaN(v)?"–":pct(v*100,d);
+const fnum=(v,d=2)=>v==null||isNaN(v)?"–":Number(v).toFixed(d);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const toast=(m)=>{const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display="none",2600)};
+async function api(path,opts){const r=await fetch(path,opts);if(!r.ok){let m=r.statusText;try{m=(await r.json()).detail||m}catch(e){}throw new Error(m)}return r.json()}
+const post=(p,body)=>api(p,{method:"POST",headers:{"Content-Type":"application/json"},body:body?JSON.stringify(body):undefined});
+
+const AGENTS={idea:["Idea Agent","idea"],coder:["Coder Agent","coder"],critic:["Critic Agent","critic"],trader_momentum:["Trader, momentum","trader"],trader_contrarian:["Trader, contrarian","trader"],trader_risk_averse:["Trader, risk averse","trader"],review:["Review Agent","review"],engine:["Engine","engine"],data:["Data Agent","data"],selector:["Selector","selector"],sandbox:["Sandbox","sandbox"],scorer:["Scorer","scorer"],orchestrator:["Orchestrator","engine"]};
+const PHASE_LABEL={data:"Data",research:"Research",select:"Research",trade:"Trading",score:"Scoring",review:"Review",apply:"Review"};
+const RANK={campaign_started:1,data_fetch:1,data_ready:1,season_started:2,hypotheses:3,code:4,sandbox_rejected:5,sandbox_ok:5,lookahead_failed:5,backtest:6,turnover_feedback:6,critic:7,strategy_failed:7,budget_strategies:8,candidate_skipped:9,selector_fallback:9,book_selected:9,book_trading:10,desk_open:10,decision:11,fill:11,season_scored:13,review:14,change_applied:15,invalid_recommendation:15,pending_recommendations:15,recommendation_rejected:15,season_done:16,campaign_done:16,stopped:16,budget_exceeded:16,agent_error:16,campaign_error:16,llm_retry:16,season_skipped:16,season_unavailable:16,score_skipped:16,review_skipped:16};
+const REFRESH=new Set(["campaign_started","data_ready","season_started","book_selected","season_scored","review","change_applied","campaign_done","stopped","campaign_error","phase","pending_recommendations"]);
+const SKIP=new Set(["llm_call"]);
+
+const S={status:null,state:null,events:[],seen:new Set(),campaign:null,walk:false,step:0,filter:"All",following:true,es:null,replayEs:null,replaying:false,curTicker:null,strategy:null,refreshT:null};
+
+// ---------- feed ----------
+const rows=$("rows"),feedEl=$("feedpane");
+function phaseOf(ev){if(ev.kind==="campaign_started"||ev.kind.startsWith("data"))return"Data";if(ev.phase)return PHASE_LABEL[ev.phase]||"";return""}
+function rowFor(ev){
+  if(SKIP.has(ev.kind))return null;
+  const d=document.createElement("div");d.dataset.phase=phaseOf(ev);d.dataset.kind=ev.kind;
+  if(ev.kind==="phase"){d.className="row divider";d.textContent=`Season ${ev.season??"–"}, phase: ${ev.payload.name}`;return d}
+  let text=ev.payload.text;
+  if(ev.kind==="llm_retry")text=`The model's answer was not valid JSON (attempt ${ev.payload.attempt}): ${ev.payload.error}. Asking again with the error.`;
+  if(!text)return null;
+  const a=AGENTS[ev.agent]||[ev.agent||ev.kind,"engine"];const cls=/error|failed|rejected|invalid|exceeded|stopped/.test(ev.kind)?"error":a[1];
+  d.className="row new";
+  let details="";
+  if(ev.kind==="code"&&ev.payload.code)details=`<details><summary>Show the code</summary><pre>${esc(ev.payload.code)}</pre></details>`;
+  if(ev.kind==="hypotheses"&&ev.payload.items)details=`<details><summary>Show the hypotheses</summary><pre>${esc(ev.payload.items.map(h=>`${h.name} [${h.family}]\n  ${h.idea}\n  features: ${(h.features_used||[]).join(", ")}`).join("\n\n"))}</pre></details>`;
+  if(ev.kind==="review"&&ev.payload.recommendations)details=`<details><summary>Show the recommendations</summary><pre>${esc(ev.payload.recommendations.map((r,i)=>`${i+1}. ${r.lever} ${r.target} -> ${r.change}\n   why: ${r.rationale}\n   expect: ${r.expected_effect}  revert if: ${r.revert_if}`).join("\n"))}</pre></details>`;
+  if(ev.kind==="book_selected"&&ev.payload.candidates&&ev.payload.candidates.length)details=`<details><summary>Show the candidates</summary><pre>${esc(ev.payload.candidates.map(c=>`${c.name}: validation Sharpe ${Number(c.val_sharpe).toFixed(2)}, turnover ${(c.val_turnover*100).toFixed(0)}%/yr`).join("\n"))}</pre></details>`;
+  if(ev.kind==="data_ready"&&ev.payload.report)details=`<details><summary>Data Agent report</summary><pre>${esc(ev.payload.report)}</pre></details>`;
+  if(ev.kind==="campaign_error"&&ev.payload.trace)details=`<details><summary>Traceback</summary><pre>${esc(ev.payload.trace)}</pre></details>`;
+  text=esc(text).replace(/\b(BUY|SELL|HOLD|KEEP|DISCARD)\b/g,"<span class='act'>$1</span>");
+  d.innerHTML=`<time>${(ev.ts||"").slice(11,19)}</time><span><span class="tag ${cls}">${esc(a[0])}</span></span><div class="msg">${text}${details}</div>`;
+  return d;
+}
+function visible(ev){if(S.filter!=="All"&&phaseOf(ev)!==S.filter)return false;if(S.walk){const r=RANK[ev.kind]??16;return r<=S.step}return true}
+function renderFeed(){rows.innerHTML="";let any=false;for(const ev of S.events){if(!visible(ev))continue;const r=rowFor(ev);if(r){r.classList.remove("new");rows.appendChild(r);any=true}}if(!any)rows.innerHTML='<div class="empty">No events to show yet.</div>';if(S.following)feedEl.scrollTop=feedEl.scrollHeight}
+function appendEvent(ev){if(!visible(ev))return;const r=rowFor(ev);if(!r)return;const e=rows.querySelector(".empty");if(e)e.remove();rows.appendChild(r);if(S.following)feedEl.scrollTop=feedEl.scrollHeight}
+function handleEvent(ev){
+  const key=`${ev.campaign}:${ev.seq}`;if(S.seen.has(key))return;S.seen.add(key);
+  if(ev.campaign&&S.campaign&&ev.campaign!==S.campaign){S.events=[];S.seen=new Set([key]);rows.innerHTML=""}
+  if(ev.campaign)S.campaign=ev.campaign;
+  S.events.push(ev);appendEvent(ev);
+  if(ev.kind==="phase"){$("now-phase").textContent="Phase: "+ev.payload.name;$("now-phase-sub").textContent=PHASE_LABEL[ev.payload.name]||""}
+  if(ev.agent){const a=AGENTS[ev.agent];$("now-agent").textContent=a?a[0]:ev.agent;$("now-agent-sub").textContent=ev.payload.text?String(ev.payload.text).slice(0,60):""}
+  if(ev.kind==="season_started"){$("now-season").textContent=`Season ${ev.season} of ${S.state?.campaign?.seasons||"?"}`;$("now-season-sub").textContent=`${ev.payload.label||""}, ${ev.payload.start||""} to ${ev.payload.end||""}`}
+  if(REFRESH.has(ev.kind)){clearTimeout(S.refreshT);S.refreshT=setTimeout(refreshState,400)}
+}
+function connectLive(){if(S.es)S.es.close();S.replaying=false;$("feedtitle").textContent="Live feed";$("livebtn").style.display="none";S.es=new EventSource("/api/events?since=0");S.es.onmessage=e=>handleEvent(JSON.parse(e.data));S.es.onerror=()=>{}}
+feedEl.addEventListener("scroll",()=>{S.following=feedEl.scrollHeight-feedEl.scrollTop-feedEl.clientHeight<40;$("follow").classList.toggle("on",S.following);$("follow").textContent=S.following?"Following":"Scroll to bottom to follow"});
+document.querySelectorAll(".feedhead .chip[data-f]").forEach(c=>c.addEventListener("click",()=>{document.querySelectorAll(".feedhead .chip[data-f]").forEach(x=>x.classList.remove("on"));c.classList.add("on");S.filter=c.dataset.f;renderFeed()}));
+
+// ---------- status + state ----------
+async function refreshStatus(){try{S.status=await api("/api/status")}catch(e){return}renderStatus()}
+async function refreshState(){try{S.state=await api("/api/state")}catch(e){return}renderState();const t=document.querySelector(".tabbar button.on")?.dataset.tab;if(t&&t!=="progress"&&t!=="strategy")loadTab(t)}
+function renderStatus(){
+  const s=S.status;if(!s)return;
+  $("st-ollama").innerHTML=`<i class="dot ${s.ollama.ok?"ok":"bad"}"></i><span title="${esc(s.ollama.message)}">${s.ollama.ok?"Ollama, "+esc(s.model):"Ollama offline"}</span>`;
+  $("st-data").innerHTML=s.data?`<i class="dot ok"></i><span>Data, ${s.data.tickers.length} tickers to ${s.data.end}, hash ${s.data.sha256.slice(0,4)}</span>`:`<i class="dot"></i><span>No data yet</span>`;
+  $("st-campaign").innerHTML=s.campaign?`<i class="dot ${s.running?"busy":"ok"}"></i><span>${esc(s.campaign)}${s.running?(s.paused?", paused":", running"):", finished"}</span>`:"<span>No campaign</span>";
+  $("pausebtn").disabled=$("stepbtn").disabled=$("stopbtn").disabled=!s.running;
+  $("pausebtn").textContent=s.paused?"Resume":"Pause";
+  $("runbtn").disabled=s.running;
+  if(s.budget){$("now-budget").textContent=`LLM calls ${s.budget.calls} of ${s.budget.max_calls}`;$("now-meter").style.width=Math.min(100,100*s.budget.calls/Math.max(1,s.budget.max_calls))+"%";$("now-time").textContent=`${s.budget.minutes.toFixed(1)} min`}
+  if(!s.running){$("now-agent").textContent="No agent active";$("now-agent-sub").textContent="";if(!s.campaign)$("now-phase").textContent="Idle"}
+  if(s.error)toast("Campaign error: "+s.error);
+}
+function renderState(){
+  const st=S.state;if(!st||!st.campaign){return}
+  const c=st.campaign;
+  if(!c.running){$("now-phase").textContent=c.error?"Error":"Finished";$("now-phase-sub").textContent=c.error||`${st.seasons.filter(s=>s.state==="done").length} seasons scored`}
+  if(c.season==null){const done=st.seasons.filter(s=>s.state==="done");if(done.length){$("now-season").textContent=`${done.length} of ${c.seasons} seasons`;$("now-season-sub").textContent=`${c.id}`}}
+  // ladder
+  const box=$("ladder");box.innerHTML="";
+  st.seasons.forEach(s=>{const d=document.createElement("div");d.className="s "+s.state;
+    const r=s.state==="queued"?"<span class='q'>queued</span>":s.state==="live"?"<span class='q'>trading now</span>":`<div class='r'><b>Team ${fpct(s.team)}</b><br><span class='q'>SPY ${fpct(s.spy)}${s.partial?", partial":""}</span></div>`;
+    d.innerHTML=`<div><div class='n'>S${s.n}</div><div class='q'>${s.label}</div></div>${r}`;box.appendChild(d)});
+  // this season
+  const t=st.this_season;
+  if(t){$("ts-title").textContent=`Season ${t.n}, ${t.label}`;$("ts-sub").textContent=t.scored?(t.partial?"Scored, partial quarter":"Scored, full quarter"):`Trading, ${t.decisions_count} decisions so far`;
+    const f=t.figures||{};$("ts-team").textContent=fpct(f.team);$("ts-spy").textContent=fpct(f.spy);$("ts-book").textContent=fpct(f.book);$("ts-desk").textContent=fpct(f.desk);
+    drawSpark(t.daily||[]);
+    $("ts-lb").innerHTML=(t.leaderboard||[]).map(r=>`<tr><td>${esc(r.name)}${r.is_book?", quant book":""}</td><td class="num">${fnum(r.val_sharpe)}</td><td class="num">${fpct(r.season_return)}</td></tr>`).join("")||"<tr><td colspan=3 class='note'>No candidates yet</td></tr>";
+    $("season-h").textContent=`Leaderboard, season ${t.n} (${t.label})`;
+    $("season-lb").innerHTML=(t.leaderboard||[]).map(r=>`<tr><td>${esc(r.name)}${r.is_book?" (quant book)":""}</td><td>${r.kind}</td><td class="num">${fnum(r.val_sharpe)}</td><td class="num">${fpct(r.season_return)}</td></tr>`).join("");
+    $("strat-title").textContent=t.book?.name?`${t.book.name}, the quant book for season ${t.n}`:"No quant book yet";
+    $("strat-code").textContent=t.book?.code||(t.book?.name?`${t.book.name} is a baseline (fallback); see aitrader/backtest/strategies.py`:"");
+    $("strat-meta").textContent=t.book?.name?`Validation Sharpe ${fnum(t.book.val_sharpe)}${t.book.fallback?" (fallback: nothing qualified)":""}. Universe: ${(c.universe.tickers||[]).join(", ")}. SPY is the benchmark and is never held.`:"";
+  }
+  // progress
+  const p=st.progress,sc=p.scorecard;
+  $("scorecard").innerHTML=[
+    [`Seasons beating SPY`,`${sc.seasons_beating_spy}<em>of ${sc.seasons_done} scored</em>`],
+    [`Excess return since season 1`,sc.excess_pts==null?"–":`${sc.excess_pts>0?"+":""}${sc.excess_pts.toFixed(1)}<em>pts vs SPY</em>`],
+    [`Sharpe, out of sample`,fnum(sc.sharpe_oos,2)],[`Worst drawdown`,fpct(sc.max_dd)],
+    [`Strategies tried`,`${sc.strategies_tried}<em>${sc.kept} kept</em>`],[`Lessons the coach kept`,`${sc.lessons}<em>${sc.reverted} reverted</em>`]
+  ].map(([a,b])=>`<div><small>${a}</small><b>${b}</b></div>`).join("");
+  drawTrack(p.daily,p.changes);drawExcess(p.table);drawPredict(p.table);
+  $("seasontable").innerHTML=p.table.map(r=>`<tr><td>S${r.season}, ${r.label}${r.partial?", partial":""}</td><td>${esc(r.book_name||"")}</td><td class="num">${fnum(r.book_val_sharpe)}</td><td class="num">${fnum(r.book_season_sharpe)}</td><td class="num">${fpct(r.team)}</td><td class="num">${fpct(r.spy)}</td><td class="num"><i class="sign ${r.team-r.spy>=0?"up":"down"}"></i>${pct((r.team-r.spy)*100)}</td><td class="num">${fpct(r.book)}</td><td class="num">${fpct(r.desk)}</td><td>${(r.changes_applied||[]).join(", ")||"–"}</td></tr>`).join("")||"<tr><td colspan=10 class='note'>No season scored yet</td></tr>";
+  renderProcesses();
+  if(document.querySelector('.tabbar button.on')?.dataset.tab==="strategy")loadStrategy();
+}
+
+// ---------- charts ----------
+function drawSpark(daily){const svg=$("spark");svg.innerHTML="";const W=svg.clientWidth,H=svg.clientHeight;if(!W||!daily.length)return;
+  const keys=[["team","--team",2],["book","--quant",2],["desk","--desk",2],["spy","--spy",1.5]];let lo=Infinity,hi=-Infinity;
+  keys.forEach(([k])=>daily.forEach(d=>{lo=Math.min(lo,d[k]);hi=Math.max(hi,d[k])}));
+  const xs=i=>6+(W-12)*i/(daily.length-1||1),ys=v=>6+(H-12)*(1-(v-lo)/((hi-lo)||1));
+  svg.appendChild(el("line",{x1:6,x2:W-6,y1:ys(1),y2:ys(1),class:"axis"}));
+  keys.forEach(([k,c,w])=>svg.appendChild(el("path",{d:daily.map((d,i)=>(i?"L":"M")+xs(i).toFixed(1)+","+ys(d[k]).toFixed(1)).join(" "),fill:"none",stroke:css(c),"stroke-width":w,"stroke-linejoin":"round"})));
+  svg.appendChild(el("text",{x:6,y:H-1},daily[0].date));svg.appendChild(el("text",{x:W-6,y:H-1,"text-anchor":"end"},daily[daily.length-1].date));}
+function drawTrack(daily,changes){
+  const svg=$("track"),tip=$("tracktip");svg.innerHTML="";const W=svg.clientWidth,H=svg.clientHeight,m={t:26,r:118,b:34,l:44};if(!W)return;
+  if(!daily||daily.length<2){svg.appendChild(el("text",{x:W/2,y:H/2,"text-anchor":"middle"},"The track record appears once a season has been scored"));return}
+  const series=[{k:"team",label:"Team",color:css("--team"),w:2.2},{k:"book",label:"Quant book",color:css("--quant"),w:2},{k:"desk",label:"Desk",color:css("--desk"),w:2},{k:"spy",label:"SPY",color:css("--spy"),w:1.5}];
+  const N=daily.length;const xs=i=>m.l+(W-m.l-m.r)*i/(N-1);
+  let lo=Infinity,hi=-Infinity;series.forEach(s=>daily.forEach(d=>{lo=Math.min(lo,d[s.k]);hi=Math.max(hi,d[s.k])}));
+  lo=Math.floor((lo-1)*20)/20+1-0.02;hi=Math.ceil((hi-1)*20)/20+1+0.02;const ys=v=>m.t+(H-m.t-m.b)*(1-(v-lo)/(hi-lo));
+  for(let g=Math.ceil((lo-1)/0.05)*0.05;g<=hi-1+1e-9;g+=0.05){const y=ys(1+g);svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:y,y2:y,class:"grid"}));svg.appendChild(el("text",{x:m.l-8,y:y+4,"text-anchor":"end"},(g>0?"+":"")+Math.round(g*100)+"%"))}
+  svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:ys(1),y2:ys(1),class:"axis"}));
+  // season bands
+  const starts={};daily.forEach((d,i)=>{if(!(d.season in starts))starts[d.season]=i});const seasonsArr=Object.keys(starts).map(Number).sort((a,b)=>a-b);
+  seasonsArr.forEach((s,j)=>{const i0=starts[s],i1=j+1<seasonsArr.length?starts[seasonsArr[j+1]]:N;if(j>0)svg.appendChild(el("line",{x1:xs(i0),x2:xs(i0),y1:m.t-4,y2:H-m.b,class:"axis"}));
+    const lab=(S.state?.seasons||[]).find(x=>x.n===s);svg.appendChild(el("text",{x:(xs(i0)+xs(i1-1))/2,y:H-10,"text-anchor":"middle"},`S${s} ${lab?lab.label:""}`))});
+  series.forEach(s=>svg.appendChild(el("path",{d:daily.map((d,i)=>(i?"L":"M")+xs(i).toFixed(1)+","+ys(d[s.k]).toFixed(1)).join(" "),fill:"none",stroke:s.color,"stroke-width":s.w,"stroke-linejoin":"round"})));
+  const ends=series.map(s=>({s,y:ys(daily[N-1][s.k]),v:daily[N-1][s.k]})).sort((a,b)=>a.y-b.y);for(let i=1;i<ends.length;i++)if(ends[i].y-ends[i-1].y<15)ends[i].y=ends[i-1].y+15;
+  ends.forEach(e=>{svg.appendChild(el("text",{x:W-m.r+10,y:e.y+4,class:"lbl"},`${e.s.label} ${pct((e.v-1)*100)}`));svg.appendChild(el("circle",{cx:xs(N-1),cy:ys(e.v),r:3.5,fill:e.s.color,stroke:"#fff","stroke-width":1.5}))});
+  // change markers at the start of the season they apply from
+  const bySeason={};(changes||[]).filter(c=>c.lever!=="manual_edit").forEach(c=>{(bySeason[c.applies_from_season]=bySeason[c.applies_from_season]||[]).push(c)});
+  Object.entries(bySeason).forEach(([s,cs])=>{const i0=starts[s];if(i0==null)return;const x=xs(i0);const g=el("g");g.appendChild(el("title",{},cs.map(c=>`Change ${c.id}: ${c.lever} ${c.target} -> ${c.change}`).join("\n")));
+    cs.slice(0,6).forEach((c,k)=>{const cx=x+10+k*18;g.appendChild(el("rect",{x:cx-8,y:4,width:16,height:16,rx:3,fill:c.status==="reverted"?"#8a929d":"#1b2430"}));g.appendChild(el("text",{x:cx,y:16,"text-anchor":"middle",style:"fill:#fff;font-weight:600;font-size:11px"},c.id))});
+    g.appendChild(el("line",{x1:x,x2:x,y1:20,y2:m.t+2,stroke:"#1b2430","stroke-width":1.2}));svg.appendChild(g)});
+  const cross=el("line",{y1:m.t,y2:H-m.b,stroke:"#1b2430","stroke-width":1,opacity:0});svg.appendChild(cross);
+  svg.onmousemove=e=>{const r=svg.getBoundingClientRect();let i=Math.round((e.clientX-r.left-m.l)/(W-m.l-m.r)*(N-1));i=Math.max(0,Math.min(N-1,i));const x=xs(i);cross.setAttribute("x1",x);cross.setAttribute("x2",x);cross.setAttribute("opacity",1);
+    tip.innerHTML=`<b>${daily[i].date}, season ${daily[i].season}</b><br>`+series.map(s=>`${s.label} ${pct((daily[i][s.k]-1)*100)}`).join("<br>");tip.style.display="block";const tw=tip.offsetWidth;tip.style.left=(x+14+tw>W?x-tw-14:x+14)+"px";tip.style.top=(e.clientY-r.top+40)+"px"};
+  svg.onmouseleave=()=>{tip.style.display="none";cross.setAttribute("opacity",0)};
+}
+function drawExcess(table){const svg=$("excess");svg.innerHTML="";const W=svg.clientWidth,H=svg.clientHeight,m={t:14,r:10,b:26,l:36};if(!W||!table.length)return;
+  const vals=table.map(r=>((r.team||0)-(r.spy||0))*100);const maxA=Math.max(2,Math.ceil(Math.max(...vals.map(Math.abs))));const y0=m.t+(H-m.t-m.b)/2;const sc=(H-m.t-m.b)/2/maxA;
+  [-maxA,-maxA/2,0,maxA/2,maxA].forEach(g=>{const y=y0-g*sc;svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:y,y2:y,class:g?"grid":"axis"}));svg.appendChild(el("text",{x:m.l-6,y:y+4,"text-anchor":"end"},(g>0?"+":"")+g.toFixed(g%1?1:0)))});
+  const n=vals.length,bw=Math.min(44,(W-m.l-m.r)/n*0.5);
+  vals.forEach((v,i)=>{const cx=m.l+(W-m.l-m.r)*(i+.5)/n;const h=Math.abs(v)*sc;const y=v>=0?y0-h:y0;const op=table[i].partial?.45:1;
+    svg.appendChild(el("rect",{x:cx-bw/2,y,width:bw,height:h,fill:"var(--team)",opacity:op}));svg.appendChild(el("rect",{x:cx-bw/2,y:v>=0?y:y+h-4,width:bw,height:4,rx:2,fill:"var(--team)",opacity:op}));
+    svg.appendChild(el("text",{x:cx,y:v>=0?y-5:y+h+13,"text-anchor":"middle",class:"lbl"},(v>0?"+":v<0?"−":"")+Math.abs(v).toFixed(1)));svg.appendChild(el("text",{x:cx,y:H-8,"text-anchor":"middle"},"S"+table[i].season))});}
+function drawPredict(table){const svg=$("predict");svg.innerHTML="";const W=svg.clientWidth,H=svg.clientHeight,m={t:10,r:14,b:24,l:36};if(!W)return;
+  const rows=table.filter(r=>r.book_val_sharpe!=null&&r.book_season_sharpe!=null);if(!rows.length){svg.appendChild(el("text",{x:W/2,y:H/2,"text-anchor":"middle"},"Appears once a researched strategy has traded a season"));return}
+  const vals=rows.flatMap(r=>[r.book_val_sharpe,r.book_season_sharpe]);const lo=Math.min(-1,Math.floor(Math.min(...vals))),hi=Math.max(1,Math.ceil(Math.max(...vals)));
+  const xs=v=>m.l+(W-m.l-m.r)*(v-lo)/(hi-lo);const ys=i=>m.t+(H-m.t-m.b)*(i+.5)/rows.length;
+  for(let g=lo;g<=hi;g++){svg.appendChild(el("line",{x1:xs(g),x2:xs(g),y1:m.t,y2:H-m.b,class:g?"grid":"axis"}));svg.appendChild(el("text",{x:xs(g),y:H-6,"text-anchor":"middle"},g))}
+  rows.forEach((r,i)=>{const y=ys(i);svg.appendChild(el("text",{x:m.l-8,y:y+4,"text-anchor":"end"},"S"+r.season));svg.appendChild(el("line",{x1:xs(r.book_val_sharpe),x2:xs(r.book_season_sharpe),y1:y,y2:y,stroke:"var(--team)","stroke-width":2}));
+    svg.appendChild(el("circle",{cx:xs(r.book_val_sharpe),cy:y,r:5,fill:"#fbfbfa",stroke:"var(--team)","stroke-width":2}));svg.appendChild(el("circle",{cx:xs(r.book_season_sharpe),cy:y,r:5,fill:"var(--team)"}))});
+  svg.appendChild(el("text",{x:W-m.r,y:m.t+8,"text-anchor":"end"},"Sharpe"));}
+
+// ---------- strategy tab ----------
+async function loadStrategy(){const t=S.state?.this_season;if(!t||!t.book){return}
+  try{S.strategy=await api(`/api/strategy?season=${t.n}${S.curTicker?"&ticker="+S.curTicker:""}`)}catch(e){$("tickers").innerHTML=`<span class="note">${esc(e.message)}</span>`;return}
+  const st=S.strategy;S.curTicker=st.ticker;$("strat-idea").textContent="";
+  const box=$("tickers");box.innerHTML="";(st.tickers||[]).forEach(tk=>{const b=document.createElement("button");b.className="chip"+(tk===st.ticker?" on":"");b.textContent=tk;b.onclick=()=>{S.curTicker=tk;loadStrategy()};box.appendChild(b)});
+  try{drawPrice(st)}catch(e){box.insertAdjacentHTML("beforeend",`<span class="note">chart error: ${esc(e.message)}</span>`);console.error(e)}}
+function drawPrice(st){const svg=$("price"),tip=$("pricetip");svg.innerHTML="";const W=svg.clientWidth,H=svg.clientHeight;const ser=st.series||[];if(!W||!ser.length){svg.appendChild(el("text",{x:W/2,y:H/2,"text-anchor":"middle"},"No price series cached for this ticker yet"));return}
+  const n=ser.length,m={l:52,r:118};const xs=i=>m.l+(W-m.l-m.r)*i/(n-1);const panels=[{y:14,h:270},{y:300,h:70},{y:388,h:110}];
+  const P=panels[0];const vals=ser.flatMap(d=>[d.close,d.sma20,d.sma50,d.high20]).filter(v=>v!=null);const lo=Math.min(...vals)*0.97,hi=Math.max(...vals)*1.03;const yp=v=>P.y+P.h*(1-(v-lo)/(hi-lo));
+  let a=null;for(let i=0;i<=n;i++){const h=i<n&&ser[i].weight>0;if(h&&a===null)a=i;if(!h&&a!==null){svg.appendChild(el("rect",{x:xs(a),y:P.y,width:Math.max(1,xs(i-1)-xs(a)+2),height:P.h,fill:"var(--accent-soft)"}));a=null}}
+  const step=Math.max(1,Math.round((hi-lo)/5/5)*5);for(let g=Math.ceil(lo/step)*step;g<hi;g+=step){svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:yp(g),y2:yp(g),class:"grid"}));svg.appendChild(el("text",{x:m.l-8,y:yp(g)+4,"text-anchor":"end"},g))}
+  const bIdx=ser.findIndex(d=>d.date>=st.season_start);if(bIdx>0){panels.forEach(p=>svg.appendChild(el("line",{x1:xs(bIdx),x2:xs(bIdx),y1:p.y,y2:p.y+p.h,class:"axis"})));svg.appendChild(el("text",{x:xs(bIdx)-6,y:P.y+12,"text-anchor":"end"},"validation year"));svg.appendChild(el("text",{x:xs(bIdx)+6,y:P.y+12},"season "+st.season))}
+  const line=(key,color,wd,y)=>{let d="",pen=false;ser.forEach((r,i)=>{const v=r[key];if(v==null){pen=false;return}d+=(pen?"L":"M")+xs(i).toFixed(1)+","+y(v).toFixed(1);pen=true});svg.appendChild(el("path",{d,fill:"none",stroke:color,"stroke-width":wd,"stroke-linejoin":"round"}))};
+  line("high20",css("--ink-3"),1.2,yp);line("sma50",css("--quant"),1.4,yp);line("sma20",css("--team"),1.6,yp);line("close",css("--ink"),1.5,yp);
+  for(let i=1;i<n;i++){const h=ser[i].weight>0,hp=ser[i-1].weight>0;if(h&&!hp&&ser[i].close!=null){const x=xs(i),y=yp(ser[i].close)+14;svg.appendChild(el("path",{d:`M${x},${y-8} L${x-6},${y+2} L${x+6},${y+2} Z`,fill:"var(--good)"}))}if(!h&&hp&&ser[i].close!=null){const x=xs(i),y=yp(ser[i].close)-14;svg.appendChild(el("path",{d:`M${x},${y+8} L${x-6},${y-2} L${x+6},${y-2} Z`,fill:"var(--crit)"}))}}
+  const last=ser[n-1];if(last.close!=null)svg.appendChild(el("text",{x:W-m.r+8,y:yp(last.close)+4,class:"lbl"},last.close.toFixed(0)));
+  const Q=panels[1];const wmax=Math.max(0.05,st.max_weight||0.3)*1.07;const yw=v=>Q.y+Q.h*(1-v/wmax);svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:yw(0),y2:yw(0),class:"axis"}));svg.appendChild(el("text",{x:m.l-8,y:yw(st.max_weight||0.3)+4,"text-anchor":"end"},Math.round((st.max_weight||0.3)*100)+"%"));svg.appendChild(el("text",{x:m.l-8,y:yw(0)+4,"text-anchor":"end"},"0"));
+  let dw="M"+xs(0)+","+yw(0);ser.forEach((r,i)=>{dw+=" L"+xs(i).toFixed(1)+","+yw(Math.min(r.weight,wmax)).toFixed(1)});dw+=" L"+xs(n-1)+","+yw(0)+" Z";svg.appendChild(el("path",{d:dw,fill:"var(--team)",opacity:.35}));svg.appendChild(el("text",{x:W-m.r+8,y:Q.y+12,class:"lbl"},"weight"));
+  const E=panels[2];const ev=ser.flatMap(r=>[r.equity,r.hold]);const elo=Math.min(...ev)*0.98,ehi=Math.max(...ev)*1.02;const ye=v=>E.y+E.h*(1-(v-elo)/((ehi-elo)||1));svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:ye(1),y2:ye(1),class:"axis"}));svg.appendChild(el("text",{x:m.l-8,y:ye(1)+4,"text-anchor":"end"},"1.00"));
+  line("hold",css("--spy"),1.3,ye);line("equity",css("--team"),2,ye);
+  {let y1=ye(last.equity),y2=ye(last.hold);if(Math.abs(y1-y2)<15){const mid=(y1+y2)/2;const up=y1<=y2;y1=up?mid-8:mid+8;y2=up?mid+8:mid-8}svg.appendChild(el("text",{x:W-m.r+8,y:y1+4,class:"lbl"},"sleeve "+pct((last.equity-1)*100)));svg.appendChild(el("text",{x:W-m.r+8,y:y2+4},`hold ${Math.round((st.max_weight||0.3)*100)}% ${pct((last.hold-1)*100)}`))}
+  let lastM="";ser.forEach((r,i)=>{const mo=r.date.slice(0,7);if(mo!==lastM&&[1,4,7,10].includes(+r.date.slice(5,7))&&(i===0||ser[i-1].date.slice(0,7)!==mo)){svg.appendChild(el("text",{x:xs(i),y:H-2,"text-anchor":"middle"},r.date.slice(0,7)))}lastM=mo});
+  const cross=el("line",{y1:P.y,y2:E.y+E.h,stroke:"#1b2430","stroke-width":1,opacity:0});svg.appendChild(cross);
+  svg.onmousemove=e=>{const r=svg.getBoundingClientRect();let i=Math.round((e.clientX-r.left-m.l)/(W-m.l-m.r)*(n-1));i=Math.max(0,Math.min(n-1,i));const x=xs(i);cross.setAttribute("x1",x);cross.setAttribute("x2",x);cross.setAttribute("opacity",1);const d=ser[i];
+    tip.innerHTML=`<b>${d.date}</b> ${d.weight>0?"holding":"flat"}<br>close ${fnum(d.close)}<br>sma20 ${fnum(d.sma20)}  sma50 ${fnum(d.sma50)}<br>high20 ${fnum(d.high20)}<br>weight ${(d.weight*100).toFixed(0)}%<br>sleeve ${pct((d.equity-1)*100)}`;tip.style.display="block";const tw=tip.offsetWidth;tip.style.left=(x+14+tw>W?x-tw-14:x+14)+"px";tip.style.top=(e.clientY-r.top+30)+"px"};
+  svg.onmouseleave=()=>{tip.style.display="none";cross.setAttribute("opacity",0)};
+  // trades
+  const tb=$("trades").querySelector("tbody");tb.innerHTML="";const trades=[];let open=null;for(let i=1;i<n;i++){if(ser[i].weight>0&&!(ser[i-1].weight>0))open={i};if(open&&!(ser[i].weight>0)&&ser[i-1].weight>0){trades.push({a:open.i,b:i});open=null}}if(open)trades.push({a:open.i,b:null});
+  trades.slice().reverse().forEach(t=>{const A=ser[t.a],B=t.b==null?ser[n-1]:ser[t.b];const ret=A.close&&B.close?B.close/A.close-1:null;const tr=document.createElement("tr");tr.innerHTML=`<td>${A.date}</td><td>${t.b==null?"open":B.date}</td><td class="num">${(t.b==null?n-1:t.b)-t.a}</td><td class="num">${(A.weight*100).toFixed(0)}%</td><td class="num">${ret==null?"–":`<i class="sign ${ret>=0?"up":"down"}"></i>${pct(ret*100)}`}</td>`;tb.appendChild(tr)});
+  const wins=trades.filter(t=>{const A=ser[t.a],B=t.b==null?ser[n-1]:ser[t.b];return A.close&&B.close&&B.close>A.close}).length;$("tradeshead").textContent=`Trades on ${st.ticker}: ${trades.length}, ${wins} winners, sleeve ${pct((last.equity-1)*100)} vs holding at ${Math.round((st.max_weight||0.3)*100)}% ${pct((last.hold-1)*100)}`;}
+
+// ---------- other tabs ----------
+async function loadTab(name){
+  try{
+    if(name==="notebook"){const nb=await api("/api/notebook");$("nb").innerHTML=nb.slice().reverse().map(e=>`<tr><td>S${e.season}</td><td>${esc(e.name)}</td><td>${esc(e.family||"")}</td><td>${esc(e.idea||"")}</td><td class="num">${fnum(e.train?.sharpe)}</td><td class="num">${fnum(e.val?.sharpe)}</td><td class="num">${e.val?`${(e.val.turnover*100).toFixed(0)}%`:"–"}</td><td>${e.review?`<span class="verdict ${e.review.verdict.toLowerCase()}">${e.review.verdict}</span> ${esc((e.review.concerns||[]).join("; "))}`:esc(e.error||"")}</td><td>${e.retired?"retired":esc(e.status)}</td><td>${e.code?`<details><summary>code</summary><pre class="code">${esc(e.code)}</pre></details>`:""}</td></tr>`).join("")||"<tr><td colspan=10 class='note'>Nothing tried yet</td></tr>"}
+    if(name==="desk"){const d=await api("/api/desk");$("desk").innerHTML=d.slice().reverse().slice(0,400).map(r=>`<tr><td>S${r.season}</td><td>${r.week}</td><td>${r.date}</td><td>${esc(r.persona)}</td><td>${esc(r.ticker)}</td><td>${r.action}</td><td class="num">${fnum(r.from_weight)} to ${fnum(r.target_weight)}</td><td class="num">${fnum(r.confidence)}</td><td>${esc(r.reason)}</td><td class="num">${r.outcome_1m==null?"pending":`<i class="sign ${r.outcome_1m>=0?"up":"down"}"></i>${pct(r.outcome_1m*100)}`}</td></tr>`).join("")||"<tr><td colspan=10 class='note'>No decisions yet</td></tr>"}
+    if(name==="reviews"){const [rv,pd,cl]=await Promise.all([api("/api/reviews"),api("/api/pending"),api("/api/changelog")]);
+      $("pending").innerHTML=pd.filter(p=>p.status==="pending").length?`<div class="card"><h2>Waiting for your decision <small>Ask-me mode</small></h2>`+pd.map((p,i)=>p.status!=="pending"?"":`<div class="rec"><div class="id">${i+1}</div><div><code>${esc(p.lever)}(${esc(p.target)})</code> ${esc(p.change)} <span class="note">${esc(p.rationale)}</span></div><div><div class="st pending">Waiting</div><div class="btns"><button onclick="decidePending(${i},'accept')">Accept</button><button onclick="decidePending(${i},'reject')">Reject</button></div></div></div>`).join("")+"</div>":"";
+      const byRec=(season,r)=>cl.find(c=>c.season===season&&c.lever===r.lever&&c.target===r.target);
+      $("reviews").innerHTML=rv.slice().reverse().map(r=>`<div class="card"><h2>After season ${r.season} <small>${esc(r.assessment||"").slice(0,0)}</small></h2><p><b>Assessment.</b> ${esc(r.assessment)}</p><p><b>What worked.</b> ${esc(r.what_worked)}</p><p><b>What failed.</b> ${esc(r.what_failed)}</p>${(r.recommendations||[]).map((x,i)=>{const c=byRec(r.season,x);const st=c?(c.status==="reverted"?"reverted":"applied"):"rejected";return`<div class="rec"><div class="id">${c?c.id:"–"}</div><div><code>${esc(x.lever)}(${esc(x.target)})</code> ${esc(x.change)} <span class="note">${esc(x.rationale)}</span><br><small>Expect: ${esc(x.expected_effect)}. Revert if: ${esc(x.revert_if)}.</small></div><div class="st ${st}">${c?(c.status==="reverted"?"Reverted by "+c.reverted_by:"Applied"):"Not applied"}</div></div>`}).join("")}<details><summary class="note">Packet the coach received</summary><pre class="code">${esc(r.packet||"")}</pre></details></div>`).join("")||"<p class='note'>No review yet.</p>"}
+    if(name==="changelog"){const cl=await api("/api/changelog");$("changelog").innerHTML=cl.map(c=>`<tr><td class="num">${c.id}</td><td>S${c.season}</td><td>${esc(c.lever)}</td><td>${esc(c.target||"")}</td><td>${esc(String(c.change||""))}${c.before!=null?` <span class="note">(was ${esc(JSON.stringify(c.before))})</span>`:""}</td><td>${esc(c.rationale||"")}</td><td>${esc(c.source||"coach")}</td><td><span class="verdict ${c.status}">${c.status}${c.reverted_by?" by "+c.reverted_by:""}</span></td></tr>`).join("")||"<tr><td colspan=8 class='note'>No changes yet</td></tr>"}
+    if(name==="prompts"){const ps=await api("/api/prompts");$("promptlist").innerHTML=ps.map(p=>`<tr style="cursor:pointer" onclick="loadPrompt('${p.agent}')"><td>${esc(p.agent)}</td><td class="num">${p.words}</td><td class="num">${p.lessons}</td></tr>`).join("")}
+    if(name==="runs"){const rs=await api("/api/runs");$("runs").innerHTML=rs.slice().reverse().map(r=>{const tr=r.track_record||[];const g=k=>tr.length?pct((tr.reduce((a,x)=>a*(1+(x[k]||0)),1)-1)*100):"–";return`<tr><td>${esc(r.id)}${S.state?.campaign?.id===r.id?" (open)":""}</td><td>${esc(r.meta.model||"")}</td><td>${r.seasons_done.length} of ${r.meta.seasons||"?"}</td><td>${esc((r.meta.personas||[]).join(", "))}</td><td>${esc(r.meta.apply_mode||"")}</td><td class="num">${g("team")}</td><td class="num">${g("spy")}</td><td><button onclick="openRun('${r.id}')">Open</button> <button onclick="replayRun('${r.id}')">Replay</button></td></tr>`}).join("")||"<tr><td colspan=8 class='note'>No campaigns yet</td></tr>"}
+    if(name==="processes")renderProcesses();
+    if(name==="strategy")loadStrategy();
+  }catch(e){toast(e.message)}
+}
+async function loadPrompt(agent){const p=await api("/api/prompts/"+agent);$("prompt-name").textContent=agent+".md";$("prompt-text").value=p.prompt;$("prompt-text").dataset.agent=agent;$("prompt-lessons").innerHTML=p.lessons.length?"<b>Lessons appended by the coach:</b><br>"+p.lessons.map(l=>`${l.id}. (after S${l.season}) ${esc(l.text)}`).join("<br>"):"No lessons yet for this agent.";$("prompt-save").disabled=false}
+$("prompt-save").onclick=async()=>{const a=$("prompt-text").dataset.agent;try{await api("/api/prompts/"+a,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:$("prompt-text").value})});toast("Saved "+a+".md and logged a manual change");loadTab("prompts")}catch(e){toast(e.message)}};
+async function decidePending(i,d){try{await post(`/api/pending/${i}/${d}`);toast(d==="accept"?"Applied":"Rejected");loadTab("reviews");refreshState()}catch(e){toast(e.message)}}
+async function openRun(id){try{await post(`/api/runs/${id}/open`);S.events=[];S.seen=new Set();S.campaign=null;rows.innerHTML="";connectLive();await refreshState();await refreshStatus();toast("Opened "+id)}catch(e){toast(e.message)}}
+function replayRun(id){if(S.es)S.es.close();if(S.replayEs)S.replayEs.close();S.events=[];S.seen=new Set();S.campaign=null;rows.innerHTML="";S.replaying=true;$("feedtitle").textContent="Replay of "+id;$("livebtn").style.display="";
+  const es=new EventSource(`/api/runs/${id}/replay?speed=${$("replayspeed").value}`);S.replayEs=es;es.onmessage=e=>handleEvent(JSON.parse(e.data));es.addEventListener("end",()=>{es.close();toast("Replay finished")});es.onerror=()=>es.close();showTab("progress");openRun(id).then(()=>{});}
+$("livebtn").onclick=()=>{if(S.replayEs)S.replayEs.close();S.events=[];S.seen=new Set();S.campaign=null;rows.innerHTML="";connectLive()};
+function renderProcesses(){const s=S.status,st=S.state;const c=st?.campaign;const sc=st?.progress?.scorecard;
+  $("procgrid").innerHTML=[
+    [`Ollama server`,s?(s.ollama.ok?"Reachable":"Offline"):"Unknown",[["Model",s?.model||""],["Status",s?.ollama.message||""],["Calls this season",s?.budget?`${s.budget.calls} of ${s.budget.max_calls}`:"–"]]],
+    [`Orchestrator`,c?(c.running?`Running season ${c.season}, phase ${c.phase}`:"Idle"):"No campaign",[["Campaign",c?.id||"–"],["Personas",(c?.personas||[]).join(", ")||"–"],["Coach changes",c?.apply_mode||"–"],["Budgets",st?.params?`${st.params["budget.max_llm_calls"]} calls, ${st.params["budget.max_minutes"]} min, ${st.params["budget.max_strategies"]} strategies per season`:"–"]]],
+    [`Backtester`,"pandas, vectorised, one-bar lag, 5 bp cost",[["Universe",(c?.universe?.tickers||[]).length+" tickers + SPY"],["Strategies tried",sc?`${sc.strategies_tried} (${sc.kept} kept)`:"–"],["Params",st?.params?`max weight ${st.params["desk.max_weight"]}, min val Sharpe ${st.params["critic.min_val_sharpe"]}, max turnover ${st.params["selector.max_turnover"]}%`:"–"]]],
+    [`Sandbox`,"subprocess per strategy, 20 s limit",[["Allowed","pandas, numpy; no imports, files or network"],["Guards","AST allowlist, negative shift ban, lookahead test, exposure check"]]],
+    [`Event bus and trace`,`${S.events.length} events loaded in this page`,[["File",c?`runs/${c.id}/trace.jsonl`:"–"],["Streaming","Server-Sent Events to this browser"],["Replayable","yes, from the Runs tab"]]],
+    [`Data cache`,s?.data?`Fetched ${s.data.created?.slice(0,16)||""}`:"No manifest",[["Source","yfinance, daily adjusted closes, no key"],["Rows",s?.data?`${s.data.rows} days, ${s.data.start} to ${s.data.end}`:"–"],["Hash",s?.data?.sha256||"–"]]],
+  ].map(([t,stt,dl])=>`<div><h2><i class="dot ${s&&s.ollama.ok?"ok":""}"></i>${t}</h2><div class="st">${esc(stt)}</div><dl>${dl.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl></div>`).join("");}
+
+// ---------- tabs, controls ----------
+function showTab(id){document.querySelectorAll(".tabbar button").forEach(x=>x.classList.toggle("on",x.dataset.tab===id));document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("on",p.id==="tab-"+id));history.replaceState(null,"","#"+id);if(id==="progress"&&S.state)renderState();else loadTab(id)}
+document.querySelectorAll(".tabbar button").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
+$("runbtn").onclick=()=>$("runform").classList.toggle("on");$("f-cancel").onclick=()=>$("runform").classList.remove("on");
+$("f-start").onclick=async()=>{const personas=[...document.querySelectorAll(".f-persona:checked")].map(x=>x.value);if(!personas.length)return toast("Pick at least one persona");
+  try{const r=await post("/api/campaign",{seasons:+$("f-seasons").value||null,personas,quick:$("f-quick").checked,apply_mode:$("f-apply").value,model:$("f-model").value||null,use_llm_data:$("f-llmdata").checked});$("runform").classList.remove("on");S.events=[];S.seen=new Set();S.campaign=null;rows.innerHTML="";toast("Started "+r.campaign);setTimeout(()=>{refreshStatus();refreshState()},800)}catch(e){toast(e.message)}};
+$("pausebtn").onclick=async()=>{const act=S.status?.paused?"resume":"pause";await post("/api/control/"+act);refreshStatus()};
+$("stepbtn").onclick=async()=>{await post("/api/control/step");refreshStatus()};
+$("stopbtn").onclick=async()=>{await post("/api/control/stop");toast("Stopping after the current agent turn");refreshStatus()};
+addEventListener("resize",()=>{if(S.state)renderState()});
+
+// ---------- walkthrough ----------
+const steps=[
+ {title:"What you are looking at",tab:"progress",body:`<p>This is the control room for an <b>AI investment team</b>: seven specialised agents run by a plain Python orchestrator. The team researches strategies, trades them, gets reviewed by a coach, and tries again next season.</p><p>It trades twelve large-cap US stocks and is measured against SPY, which it never holds. Everything runs on this machine with Ollama. No API keys.</p><p>Press <b>Next</b> to follow a season from the beginning. The feed reveals the live events for each stage as you go; if nothing is running yet, start a campaign first or replay a recorded one from the Runs tab.</p>`,code:`$ uv run python -m aitrader serve\n# inside the server, one worker thread:\norchestrator.run_campaign(seasons=6)`},
+ {title:"Gather the data",tab:"progress",body:`<p>The <b>Data Agent</b> turns a one-line brief into a dataset. It calls plain functions: fetch daily bars with yfinance, run quality checks, write a manifest with a hash. The model only does the judgment around them and writes the report.</p><p>Not just SPY: thirteen tickers are fetched, the twelve the team trades plus SPY as the benchmark.</p>`,code:`plan -> fetch_prices(tickers + ["SPY"], start="2015-01-01")\nreport = check_quality(prices)\nmanifest.write(prices)   # sha256`},
+ {title:"Cut the calendar into seasons",tab:"progress",body:`<p>Each <b>season</b> is one calendar quarter the team has never seen. Before it, the agents may use everything older: a long training window and the most recent validation year. The season is sealed until traded; then it becomes history.</p>`,code:`win = seasons.windows(season=n)\nwin.train, win.validation, win.season  # expanding window\nprices_visible = prices.loc[: win.validation.end]`},
+ {title:"The Idea Agent proposes hypotheses",tab:"notebook",body:`<p>Research starts with the <b>Idea Agent</b>. It reads the feature catalog and the lab notebook of everything tried before, and answers in a fixed JSON shape. No tools: everything it needs is in the prompt.</p>`,code:`hyps = llm.structured(prompts.load("idea", lessons=...),\n    f"Features:\\n{catalog}\\n\\nNotebook:\\n{notebook.summary()}",\n    schema=Hypotheses, temperature=0)`},
+ {title:"The Coder Agent writes the strategy",tab:"strategy",body:`<p>For each hypothesis the <b>Coder Agent</b> writes one function, generate_signals, that returns a target weight per stock per day. Expand the feed row to see the exact code it produced.</p>`,code:`def generate_signals(prices, features) -> weights  # [0, 1], date x ticker\ncode = llm.structured(prompts.load("coder"), hypothesis, schema=StrategyCode)`},
+ {title:"Sandbox and lookahead guard",tab:"strategy",body:`<p>Model-written code never runs as-is. The <b>sandbox</b> parses it, bans imports, files and negative shifts, and runs it in a subprocess with a time limit. The <b>lookahead test</b> runs it again with the last 60 days withheld: if past signals change, the code peeked.</p><p>A strategy that holds nothing, or churns above the turnover limit, is sent back to the Coder with the reason.</p>`,code:`check_source(code)             # AST allowlist\nfull = fn(prices, features)\ncut  = fn(prices.iloc[:-60], ...)\nassert full.iloc[:-60].equals(cut)`},
+ {title:"Backtest on train and validation",tab:"strategy",body:`<p>The <b>engine</b> lags every signal by one bar, charges 5 basis points per unit of weight that changes, and compounds daily. It runs on the training window, then on the validation year. The Strategy tab shows the chosen book on one ticker.</p>`,code:`w = weights.clip(0,1).shift(1)        # one-bar lag\ncost = 5/1e4 * w.diff().abs().sum(axis=1)\npnl = (w * prices.pct_change()).sum(axis=1) - cost`},
+ {title:"The Critic reviews it",tab:"notebook",body:`<p>The <b>Critic Agent</b> sees the code and the train and validation numbers and votes KEEP or DISCARD, naming overfitting, turnover or concentration. The season is still sealed; it cannot grade on the answer.</p>`,code:`review = llm.structured(prompts.load("critic", lessons=...),\n    f"Code:\\n{code}\\nTrain: {m_train}\\nValidation: {m_val}", schema=Review)\nnotebook.add(hyp, code, m_train, m_val, review)`},
+ {title:"Repeat, with retries",tab:"notebook",body:`<p>The loop runs for the next idea. Rejections from the sandbox, the lookahead guard, the exposure check or the turnover limit go back to the Coder with the exact reason, three attempts at most. Budgets, not patience, end every loop.</p>`,code:`for attempt in range(3):\n    code = coder.write(hyp, feedback=err)\n    ok, err = sandbox.check(code) ... lookahead ... turnover\nelse: notebook.add(hyp, status="failed")`},
+ {title:"Pick the quant book on validation only",tab:"season",body:`<p>Research ends with plain code: the <b>selector</b> re-runs every kept strategy on the current validation year and picks the best Sharpe under a turnover cap. If nothing qualifies, it keeps last season's book or falls back to equal weight, and says so.</p>`,code:`book = max((s for s in kept if s.val.sharpe >= min_val_sharpe\n            and s.val.turnover <= max_turnover), key=lambda s: s.val.sharpe)`},
+ {title:"The season opens and the desk trades",tab:"desk",body:`<p>The sealed quarter opens one week at a time. The quant book trades mechanically from its weights. In parallel a <b>trader persona</b> makes a discretionary call on each stock from a snapshot built from data up to that day only.</p>`,code:`snap = features.snapshot(ticker, as_of=week_start)\ndecision = llm.structured(prompts.load("trader_momentum", lessons=...),\n    snap, schema=Decision, temperature=0)`},
+ {title:"One decision in full",tab:"desk",body:`<p>Every decision carries the action, the target weight, a confidence and one sentence of reasoning that must cite the snapshot. The engine fills at the next open and charges the cost. The Desk tab lists them all with the one-month outcome filled in later.</p>`,code:`{"action": "BUY", "target_weight": 0.25, "confidence": 0.66,\n "reason": "Above the 50 and 200-day averages; 3-month return +11%; RSI 58."}`},
+ {title:"Weeks go by",tab:"desk",body:`<p>Decisions accumulate. Watch for the persona citing a <b>lesson</b> from the coach: that sentence was added to its prompt after an earlier season. The feedback loop is visible in the reasoning.</p>`,code:`# runs/<campaign>/trace.jsonl, one line per event\n{"kind":"decision","agent":"trader_momentum","payload":{"ticker":"TSLA","action":"SELL",...}}`},
+ {title:"The quarter closes and the scorer runs",tab:"progress",body:`<p>Plain code computes the season's numbers: quant book, desk, the <b>team</b> (half each), SPY and the baselines. The track record grows by one quarter. Three questions the Progress tab answers: did the team beat SPY, is the record improving, did validation predict the season?</p>`,code:`team = 0.5 * book.pnl + 0.5 * desk.pnl\ntrack_record.append(season, team, spy, book_val_sharpe, book_season_sharpe)`},
+ {title:"The coach reviews the season",tab:"reviews",body:`<p>The <b>Review Agent</b> gets a compact packet: scorecard, track record, changelog, notebook summary, and the desk's best and worst decisions. It writes an assessment and at most three recommendations, each naming a lever, a number it is grounded in, and a revert condition. Open the Reviews tab to read the packet it saw.</p>`,code:`review = llm.structured(prompts.load("review"), packet.as_text(), schema=SeasonReview)`},
+ {title:"Changes are applied, within limits",tab:"changelog",body:`<p>The orchestrator applies each recommendation through the lever menu, which refuses anything outside it or outside an allowed range. A lesson becomes a numbered line appended to one agent's prompt; a parameter change is clamped. Everything gets a change number in the Changelog. In Ask-me mode you accept or reject each one.</p>`,code:`change = LEVERS[rec.lever].apply(rec)   # raises InvalidLever if out of menu\nchangelog.append(change)`},
+ {title:"Next season, and what to watch",tab:"progress",body:`<p>The calendar moves one quarter. The team researches again with its notebook and new lessons, trades a fresh sealed quarter, and is reviewed again. Each numbered flag on the track record marks where a change took effect.</p><p>With a handful of seasons, differences are mostly regime and luck. The honest questions: did validation predict the season, did the coach's changes do what they expected, and would a campaign with the coach off have done the same?</p>`,code:`for season in calendar:\n    research(); select(); trade(); score(); review(); apply()`},
+];
+function go(k){S.step=Math.max(0,Math.min(steps.length-1,k));const s=steps[S.step];$("walk-n").textContent=`Walkthrough, ${S.step+1} of ${steps.length}`;$("walk-title").textContent=s.title;$("walk-body").innerHTML=s.body;$("walk-code").textContent=s.code;$("walk-bar").style.width=((S.step+1)/steps.length*100)+"%";$("walk-back").disabled=S.step===0;$("walk-next").textContent=S.step===steps.length-1?"Finish":"Next";if(s.tab)showTab(s.tab);renderFeed();$("walk").querySelector(".body").scrollTop=0}
+function openWalk(){S.walk=true;$("walk").classList.add("on");go(0)}
+function closeWalk(){S.walk=false;$("walk").classList.remove("on");renderFeed()}
+$("walk-next").onclick=()=>S.step>=steps.length-1?closeWalk():go(S.step+1);$("walk-back").onclick=()=>go(S.step-1);$("walk-skip").onclick=closeWalk;$("walkbtn").onclick=openWalk;
+addEventListener("keydown",e=>{if(!S.walk)return;if(e.key==="ArrowRight")$("walk-next").click();if(e.key==="ArrowLeft")$("walk-back").click();if(e.key==="Escape")closeWalk()});
+
+// ---------- start ----------
+(async function init(){await refreshStatus();await refreshState();connectLive();setInterval(refreshStatus,3000);setInterval(()=>{if(S.status?.running)refreshState()},6000);
+  const h=location.hash.slice(1);if(h==="walk")openWalk();else if(h&&document.querySelector(`.tabbar button[data-tab="${h}"]`))showTab(h);})();
+</script>
+</body>
+</html>

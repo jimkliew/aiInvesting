@@ -5,7 +5,10 @@ import argparse
 import json
 import sys
 import time
+import warnings
 from pathlib import Path
+
+warnings.filterwarnings("ignore")  # yfinance emits pandas deprecation noise
 
 from .config import Universe, load_universe
 from .events import EventBus, read_trace

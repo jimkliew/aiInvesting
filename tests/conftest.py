@@ -24,3 +24,15 @@ def tmp_runs(tmp_path):
     d = tmp_path / "runs"
     d.mkdir()
     return d
+
+
+@pytest.fixture
+def synthetic(monkeypatch):
+    """Synthetic prices wired into the Data Agent so campaigns never touch the network."""
+    prices = make_prices(("AAPL", "MSFT", "NVDA", "SPY"), start="2023-01-02", days=520)
+
+    def fake_fetch(tickers, start="2015-01-01", end=None, cache_dir="data/raw", refresh=False, on_ticker=None):
+        return prices[list(tickers)]
+
+    monkeypatch.setattr("aitrader.agents.data_agent.fetch_prices", fake_fetch)
+    return prices

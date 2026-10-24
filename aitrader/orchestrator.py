@@ -201,6 +201,8 @@ class Orchestrator:
                 names.add(hyp.name)
                 self.controls.checkpoint()
                 code, full_w, feedback = None, None, None
+                m_train = m_val = None
+                max_turn = float(self.p["selector.max_turnover"])
                 for attempt in range(1, 4):
                     self.agent("coder")
                     sc = write_code(self.llm, hyp, catalog, feedback=feedback, lessons=self.store.lesson_texts("coder"))
@@ -219,7 +221,29 @@ class Orchestrator:
                         feedback = msg
                         self.emit("lookahead_failed", text=f"Lookahead test failed: {msg}", name=hyp.name, error=msg)
                         continue
-                    self.emit("sandbox_ok", text=f"Compiled, no imports or file access. Lookahead test passed: {msg}", name=hyp.name)
+                    window = full_w.loc[season.train[0]:season.visible_end]
+                    exposure = float(window.sum(axis=1).mean()) if len(window) else 0.0
+                    days_held = float((window.sum(axis=1) > 0).mean()) if len(window) else 0.0
+                    if exposure < 0.02 or days_held < 0.05:
+                        feedback = (f"the strategy holds nothing: average exposure {exposure:.1%}, invested on {days_held:.0%} of days. "
+                                    f"Check that your entry condition is ever true and that the normalisation does not divide by zero.")
+                        self.emit("sandbox_rejected", text=f"Rejected: {feedback}", name=hyp.name, error=feedback)
+                        continue
+                    self.emit("sandbox_ok", text=f"Compiled, no imports or file access. Lookahead test passed: {msg}. "
+                                                 f"Average exposure {exposure:.0%}, invested on {days_held:.0%} of days.", name=hyp.name)
+                    self.agent("engine")
+                    m_train = window_metrics(full_w, vis_prices, *season.train, self.u.cost_bps)
+                    m_val = window_metrics(full_w, vis_prices, *season.validation, self.u.cost_bps)
+                    self.emit("backtest", text=f"Backtest {hyp.name}: train Sharpe {m_train.sharpe:.2f}, validation Sharpe {m_val.sharpe:.2f}, "
+                                              f"turnover {m_val.turnover * 100:.0f}%/yr, max drawdown {m_val.max_dd * 100:.1f}%",
+                              name=hyp.name, train=m_train.model_dump(), val=m_val.model_dump())
+                    if m_val.turnover * 100 > max_turn and attempt < 3:
+                        feedback = (f"validation turnover is {m_val.turnover * 100:.0f}% per year; the limit is {max_turn:.0f}%. "
+                                    f"Trade less often: require the condition to hold for several days, add hysteresis between entry and exit, "
+                                    f"or rebalance monthly. Keep the same idea.")
+                        self.emit("turnover_feedback", text=f"Too much turnover ({m_val.turnover * 100:.0f}%/yr vs {max_turn:.0f}% limit); asking the Coder to slow it down",
+                                  name=hyp.name, turnover=m_val.turnover)
+                        continue
                     break
                 else:
                     self.store.notebook_add({"name": hyp.name, "family": hyp.family, "idea": hyp.idea, "season": season.n,
@@ -227,12 +251,8 @@ class Orchestrator:
                     self.emit("strategy_failed", text=f"{hyp.name} failed after 3 attempts: {feedback}", name=hyp.name)
                     tried += 1
                     continue
-                self.agent("engine")
-                m_train = window_metrics(full_w, vis_prices, *season.train, self.u.cost_bps)
-                m_val = window_metrics(full_w, vis_prices, *season.validation, self.u.cost_bps)
-                self.emit("backtest", text=f"Backtest {hyp.name}: train Sharpe {m_train.sharpe:.2f}, validation Sharpe {m_val.sharpe:.2f}, "
-                                          f"turnover {m_val.turnover * 100:.0f}%/yr, max drawdown {m_val.max_dd * 100:.1f}%",
-                          name=hyp.name, train=m_train.model_dump(), val=m_val.model_dump())
+                if m_val is None:
+                    continue
                 self.controls.checkpoint()
                 self.agent("critic")
                 rv = critic_review(self.llm, code, m_train, m_val, self.store.notebook_summary(), self.store.lesson_texts("critic"),
@@ -264,6 +284,17 @@ class Orchestrator:
                 continue
             m_val = window_metrics(w, vis_prices, *season.validation, self.u.cost_bps)
             candidates.append({**e, "val": m_val.model_dump(), "weights": w})
+        # classic baselines compete too: the book is the best validated rule available to the team
+        for bname, fn in BASELINES.items():
+            if bname == "buy_hold_spy":
+                continue
+            try:
+                w = fn(vis_prices, vis_feats).fillna(0.0)
+                m_val = window_metrics(w, vis_prices, *season.validation, self.u.cost_bps)
+                candidates.append({"name": bname, "code": None, "baseline": True, "family": "baseline",
+                                   "val": m_val.model_dump(), "weights": w})
+            except Exception as ex:
+                self.emit("candidate_skipped", text=f"baseline {bname} failed: {ex}", name=bname)
         prev = self.store.quant_book(season.n - 1) if season.n > 1 else None
         best, fallback = select(candidates, self.p, prev)
         if best is None:
@@ -274,7 +305,9 @@ class Orchestrator:
             name, code = best["name"], best.get("code")
             val_sharpe = (best.get("val") or {}).get("sharpe")
             if fallback:
-                self.emit("selector_fallback", text=f"No new strategy qualified; keeping last season's book {name}", fallback=name)
+                self.emit("selector_fallback", text=f"No strategy qualified; keeping last season's book {name}", fallback=name)
+            elif best.get("baseline"):
+                self.emit("selector_note", text=f"A classic baseline beat the researched strategies on validation this season: {name}", name=name)
         self.store.set_quant_book(season.n, name, code or "", val_sharpe, fallback)
         state["book"] = {"name": name, "code": code, "val_sharpe": val_sharpe, "fallback": fallback}
         ranked = sorted(candidates, key=lambda c: c["val"]["sharpe"], reverse=True)
@@ -283,7 +316,8 @@ class Orchestrator:
                                         (f". Runner-up {ranked[1]['name']} ({ranked[1]['val']['sharpe']:.2f})" if len(ranked) > 1 else "") +
                                         ". Chosen on validation only.",
                   name=name, val_sharpe=val_sharpe, fallback=fallback,
-                  candidates=[{"name": c["name"], "val_sharpe": c["val"]["sharpe"], "val_turnover": c["val"]["turnover"]} for c in ranked])
+                  candidates=[{"name": c["name"], "val_sharpe": c["val"]["sharpe"], "val_turnover": c["val"]["turnover"],
+                               "baseline": bool(c.get("baseline"))} for c in ranked])
 
     # ---- trade ----
     def trade(self, season: Season, state: dict) -> None:
