@@ -45,6 +45,10 @@ Rolling seasons mean each quarter is traded exactly once, out of sample, and onl
 
 The page at `localhost:8000` shows the live feed of every agent turn, the season ladder, this season's figures, and tabs for Progress (track record with change flags, excess return per season, did validation predict the season), Strategy (the book's code and what it did on one ticker), Notebook, Desk, Reviews (with Accept / Reject in ask-me mode), Changelog, Prompts (editable), Processes and Runs (open or replay any campaign). Press **Walkthrough** for a 17-step guided tour that reveals the feed stage by stage.
 
+## Map of the code and the agents
+
+Start with [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): one diagram of every part, the season flow phase by phase, a table of the agents (prompt, inputs, outputs, tools), the deterministic core, what lands on disk, and where to change things.
+
 ## Layout
 
 ```
