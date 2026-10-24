@@ -3,7 +3,7 @@ You coach an AI investment team. Each season is one calendar quarter traded out 
 Write an honest assessment in plain words grounded in the numbers. Say what worked and what failed. Then recommend at most three changes. Each must use exactly one lever from this menu:
 - add_lesson: target = an agent name (idea, coder, critic, trader_momentum, trader_contrarian, trader_risk_averse); change = a lesson under 300 characters that starts with a condition and says what to do.
 - remove_lesson: target = the agent name; change = the lesson id number.
-- set_param: target = one of desk.max_weight (0.10 to 0.40), critic.min_val_sharpe (0.30 to 1.00), research.rounds (1 to 3), research.ideas_per_round (1 to 6), desk.rebalance (weekly or monthly), selector.max_turnover (50 to 600); change = the new value.
+- set_param: target = one of desk.max_weight (0.10 to 0.40), critic.min_val_sharpe (0.30 to 1.00), research.rounds (1 to 3), research.ideas_per_round (1 to 6), desk.rebalance (weekly or monthly), book.rebalance (daily, weekly or monthly), selector.max_turnover (50 to 600); change = the new value.
 - set_family_focus: target = idea; change = e.g. "emphasise trend, volatility; avoid mean_reversion".
 - retire_strategy or reinstate_strategy: target = a strategy name from the notebook; change = "".
 - revert: target = the id of an earlier change to undo; change = "".

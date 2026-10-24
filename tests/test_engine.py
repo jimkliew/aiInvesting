@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from aitrader.backtest import BASELINES, metrics, normalise, run
+from aitrader.backtest import BASELINES, at_cadence, metrics, normalise, run
 from aitrader.data import compute_features
 
 
@@ -42,3 +42,18 @@ def test_baselines_respect_interface(prices):
             assert (w["SPY"].fillna(0) == 0).all(), f"{name} must not hold the benchmark"
         r = run(w.fillna(0), prices)
         assert r.equity.iloc[-1] > 0
+
+
+def test_at_cadence_holds_weights_between_rebalances(prices):
+    daily = pd.DataFrame(np.random.default_rng(1).random(prices.shape) / 4, index=prices.index, columns=prices.columns)
+    weekly = at_cadence(daily, "weekly")
+    assert weekly.shape == daily.shape
+    # within a week the weights do not move; the first day of each week matches the daily target
+    iso = prices.index.isocalendar()
+    key = iso["year"].astype(str) + "-" + iso["week"].astype(str)
+    for _, grp in weekly.groupby(key.values):
+        assert (grp.nunique() <= 1).all()
+    assert (weekly.iloc[0] == daily.iloc[0]).all()
+    monthly = at_cadence(daily, "monthly")
+    assert run(monthly, prices).turnover < run(weekly, prices).turnover < run(daily, prices).turnover
+    assert at_cadence(daily, "daily") is daily

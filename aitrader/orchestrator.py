@@ -19,6 +19,7 @@ from .agents.idea_agent import propose
 from .agents.review_agent import ReviewPacket, best_worst, coach
 from .agents.trader_agent import decide
 from .backtest.lookahead import lookahead_check
+from .backtest.engine import at_cadence
 from .backtest.metrics import metrics
 from .backtest.sandbox import Rejected, check_source, run_strategy
 from .backtest.scorer import score_season, window_metrics
@@ -221,6 +222,7 @@ class Orchestrator:
                         feedback = msg
                         self.emit("lookahead_failed", text=f"Lookahead test failed: {msg}", name=hyp.name, error=msg)
                         continue
+                    full_w = at_cadence(full_w, self.p.get("book.rebalance", "weekly"))
                     window = full_w.loc[season.train[0]:season.visible_end]
                     exposure = float(window.sum(axis=1).mean()) if len(window) else 0.0
                     days_held = float((window.sum(axis=1) > 0).mean()) if len(window) else 0.0
@@ -278,7 +280,7 @@ class Orchestrator:
             if not e.get("code"):
                 continue
             try:
-                w = run_strategy(e["code"], vis_prices, vis_feats)
+                w = at_cadence(run_strategy(e["code"], vis_prices, vis_feats), self.p.get("book.rebalance", "weekly"))
             except Rejected as ex:
                 self.emit("candidate_skipped", text=f"{e['name']} could not run on the current data: {ex}", name=e["name"])
                 continue
@@ -289,7 +291,7 @@ class Orchestrator:
             if bname == "buy_hold_spy":
                 continue
             try:
-                w = fn(vis_prices, vis_feats).fillna(0.0)
+                w = at_cadence(fn(vis_prices, vis_feats).fillna(0.0), self.p.get("book.rebalance", "weekly"))
                 m_val = window_metrics(w, vis_prices, *season.validation, self.u.cost_bps)
                 candidates.append({"name": bname, "code": None, "baseline": True, "family": "baseline",
                                    "val": m_val.model_dump(), "weights": w})
@@ -329,8 +331,9 @@ class Orchestrator:
             book_w = run_strategy(book["code"], prices_to_end, feats_to_end)
         else:
             book_w = BASELINES.get(book["name"], BASELINES["equal_weight"])(prices_to_end, feats_to_end).fillna(0.0)
+        book_w = at_cadence(book_w, self.p.get("book.rebalance", "weekly"))
         self.store.save_weights(season.n, "book_weights", book_w.loc[season.start - pd.Timedelta(days=10):])
-        self.emit("book_trading", text=f"Season opens {season.start.date()}. Quant book {book['name']} trades mechanically from its weights.",
+        self.emit("book_trading", text=f"Season opens {season.start.date()}. Quant book {book['name']} trades mechanically from its weights, rebalanced {self.p.get('book.rebalance', 'weekly')}.",
                   name=book["name"])
 
         cols = tradeable(self.prices)

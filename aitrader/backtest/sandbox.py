@@ -73,8 +73,10 @@ def run_strategy(code: str, prices: pd.DataFrame, features: dict[str, pd.DataFra
         except subprocess.TimeoutExpired:
             raise Rejected(f"strategy timed out after {timeout:.0f} s")
         if proc.returncode != 0:
-            tail = [ln for ln in proc.stderr.strip().splitlines() if ln.strip()][-6:]
-            raise Rejected("strategy raised: " + " | ".join(tail)[-700:])
+            lines = [ln for ln in proc.stderr.strip().splitlines() if ln.strip()]
+            exc = lines[-1].strip() if lines else "unknown error"
+            loc = next((ln.strip() for ln in reversed(lines) if 'File "<strategy>"' in ln), "")
+            raise Rejected(f"strategy raised {exc[:300]}" + (f" ({loc})" if loc else ""))
         w = pd.read_parquet(d / "weights.parquet")
     w = w.reindex(index=prices.index, columns=prices.columns).astype(float).fillna(0.0)
     return w

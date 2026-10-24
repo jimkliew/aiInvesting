@@ -56,6 +56,7 @@ RANGES: dict[str, Any] = {
     "research.rounds": (1, 3),
     "research.ideas_per_round": (1, 6),
     "desk.rebalance": {"weekly", "monthly"},
+    "book.rebalance": {"daily", "weekly", "monthly"},
     "selector.max_turnover": (50, 600),
 }
 
@@ -65,6 +66,7 @@ DEFAULT_PARAMS: dict[str, Any] = {
     "research.rounds": 1,
     "research.ideas_per_round": 4,
     "desk.rebalance": "monthly",
+    "book.rebalance": "weekly",
     "selector.max_turnover": 300,
     "family_focus": {"emphasise": [], "avoid": []},
     "budget.max_llm_calls": 120,

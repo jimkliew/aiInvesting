@@ -20,6 +20,27 @@ class Result:
     cost: pd.Series        # daily cost drag
 
 
+def at_cadence(weights: pd.DataFrame, cadence: str = "daily") -> pd.DataFrame:
+    """Sample target weights on the first trading day of each week or month and hold them in between.
+
+    Model-written strategies tend to rescale positions a little every day; a real book rebalances
+    on a schedule. Sampling turns that daily drift into honest, countable turnover.
+    """
+    if cadence == "daily" or len(weights) == 0:
+        return weights
+    idx = weights.index
+    if cadence == "weekly":
+        iso = idx.isocalendar()
+        keys = (iso["year"].astype(str) + "-" + iso["week"].astype(str)).values
+    elif cadence == "monthly":
+        keys = idx.to_period("M").astype(str).values
+    else:
+        raise ValueError(f"unknown cadence {cadence!r}")
+    first = pd.Series(idx, index=idx).groupby(keys).first()
+    sampled = weights.loc[sorted(first.values)]
+    return sampled.reindex(idx).ffill().fillna(0.0)
+
+
 def normalise(weights: pd.DataFrame) -> pd.DataFrame:
     w = weights.astype(float).clip(lower=0.0, upper=1.0).fillna(0.0)
     s = w.sum(axis=1)
