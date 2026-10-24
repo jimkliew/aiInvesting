@@ -113,3 +113,15 @@ def test_stop_between_turns(tmp_path, synthetic):
     orch = Orchestrator(u, store, FakeLLM(default=gen), bus, controls, quick=True, data_dir=tmp_path / "data", use_llm_data=False)
     orch.run_campaign(2)
     assert "stopped" in kinds and store.seasons_done() == []
+
+
+def test_data_agent_refuses_to_replace_healthy_tickers(tmp_path, synthetic):
+    from aitrader.agents.data_agent import run_data_agent
+    from aitrader.config import Universe
+    u = Universe(tickers=["AAPL", "MSFT", "NVDA"], benchmark="SPY", start="2023-01-02")
+    script = [("tool", "fetch_prices", {"tickers": ["AAPL", "MSFT", "NVDA"]}), ("tool", "check_quality", {}),
+              ("tool", "replace_ticker", {"bad": "AAPL", "replacement": "CSCO"}), ("tool", "write_report", {"text": "done"}), ("final", "done")]
+    llm = FakeLLM([script])
+    res = run_data_agent(llm, u, None, tmp_path / "data", use_llm=True)
+    assert sorted(res.tickers) == ["AAPL", "MSFT", "NVDA"]      # the swap was refused
+    assert res.tool_calls == ["fetch_prices", "check_quality", "replace_ticker", "write_report"]

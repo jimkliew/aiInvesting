@@ -1,7 +1,7 @@
 # generated data and runs
 data/raw/
 data/features/
-runs/
+runs/*
 # python
 .venv/
 __pycache__/

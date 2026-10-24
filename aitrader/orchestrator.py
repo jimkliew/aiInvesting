@@ -150,6 +150,11 @@ class Orchestrator:
         self.agent("data")
         res = run_data_agent(self.llm, self.u, self.bus, self.data_dir, use_llm=self.use_llm_data and self.llm is not None)
         self.prices, self.features = res.prices, res.features
+        if sorted(res.tickers) != sorted(self.u.tickers):
+            self.emit("universe_changed", text=f"Universe after the data phase: {', '.join(res.tickers)} (brief had {', '.join(self.u.tickers)})",
+                      before=self.u.tickers, after=res.tickers)
+        self.u.tickers = list(res.tickers)
+        self.store.save_meta(universe=self.u.to_dict(), data_report=res.report, data_sha256=res.manifest.get("sha256"))
         self.agent(None)
 
     # ---- season ----

@@ -33,7 +33,9 @@ class DataResult:
 
 def _deterministic(universe: Universe, data_dir: Path, on_ticker=None) -> tuple[pd.DataFrame, object]:
     prices = fetch_prices(universe.all_tickers, start=universe.start, cache_dir=data_dir / "raw", on_ticker=on_ticker)
-    rep = check_quality(prices, min_years=min(8.0, (pd.Timestamp.today() - pd.Timestamp(universe.start)).days / 365.25 - 0.5))
+    span_years = (prices.index.max() - prices.index.min()).days / 365.25 if len(prices) else 0.0
+    # a ticker is "short" when it misses more than a fifth of the dataset's span, capped at 8 years
+    rep = check_quality(prices, min_years=min(8.0, 0.8 * span_years))
     return prices, rep
 
 
@@ -49,12 +51,13 @@ def run_data_agent(llm, universe: Universe, bus=None, data_dir: str | Path = "da
     def on_ticker(t, n, how):
         emit("data_fetch", text=f"{t}: {n} days ({how})", ticker=t, rows=n, how=how)
 
-    def do_fetch(tickers: list[str]) -> str:
+    def do_fetch(tickers: list[str], allow_candidates: bool = False) -> str:
         tickers = [t.strip().upper() for t in tickers if t and t.strip()]
-        allowed = set(universe.tickers) | set(CANDIDATES) | {universe.benchmark}
+        allowed = set(universe.tickers) | {universe.benchmark} | (set(CANDIDATES) if allow_candidates else set())
         bad = [t for t in tickers if t not in allowed]
         if bad:
-            return f"error: {bad} are not in the brief or the candidate list; nothing fetched"
+            return (f"error: {bad} are not in the brief; nothing fetched. Fetch the brief's tickers first and use "
+                    f"replace_ticker only for a name the quality check flags as short")
         state["tickers"] = [t for t in tickers if t != universe.benchmark]
         u = Universe(tickers=state["tickers"], benchmark=universe.benchmark, start=universe.start)
         prices, rep = _deterministic(u, data_dir, on_ticker)
@@ -81,8 +84,14 @@ def run_data_agent(llm, universe: Universe, bus=None, data_dir: str | Path = "da
             return f"error: {replacement} is not in the candidate list {CANDIDATES}"
         if bad not in state["tickers"]:
             return f"error: {bad} is not in the current universe {state['tickers']}"
+        q = state.get("quality")
+        if q is None:
+            return "error: run check_quality first; replacements are only allowed for tickers it flags as short"
+        if bad not in q.short:
+            return (f"refused: {bad} has full history ({q.first_dates.get(bad, '?')} to {q.last_date}); "
+                    f"only tickers flagged as short may be replaced. Short: {q.short or 'none'}")
         new = [replacement if t == bad else t for t in state["tickers"]]
-        return do_fetch(new)
+        return do_fetch(new, allow_candidates=True)
 
     @tool("Save the plain-English report about the dataset")
     def write_report_tool(text: str) -> str:

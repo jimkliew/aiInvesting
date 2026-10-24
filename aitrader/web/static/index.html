@@ -472,7 +472,7 @@ function renderState(){
     $("season-h").textContent=`Leaderboard, season ${t.n} (${t.label})`;
     $("season-lb").innerHTML=(t.leaderboard||[]).map(r=>`<tr><td>${esc(r.name)}${r.is_book?" (quant book)":""}</td><td>${r.kind}</td><td class="num">${fnum(r.val_sharpe)}</td><td class="num">${fpct(r.season_return)}</td></tr>`).join("");
     $("strat-title").textContent=t.book?.name?`${t.book.name}, the quant book for season ${t.n}`:"No quant book yet";
-    $("strat-code").textContent=t.book?.code||(t.book?.name?`${t.book.name} is a baseline (fallback); see aitrader/backtest/strategies.py`:"");
+    $("strat-code").textContent=t.book?.code||(t.book?.name?`${t.book.name} is a classic baseline from aitrader/backtest/strategies.py. ${t.book.fallback?"Nothing qualified on validation, so it is the fallback.":"It beat every researched strategy on validation this season."}`:"");
     $("strat-meta").textContent=t.book?.name?`Validation Sharpe ${fnum(t.book.val_sharpe)}${t.book.fallback?" (fallback: nothing qualified)":""}. Universe: ${(c.universe.tickers||[]).join(", ")}. SPY is the benchmark and is never held.`:"";
   }
   // progress

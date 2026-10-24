@@ -16,6 +16,7 @@ from PIL import Image
 
 TEMPLATE, OUT_V12, OUT_SOLO, SHOTS = sys.argv[1:5]
 RUN_DIR = sys.argv[5] if len(sys.argv) > 5 else None
+pct = lambda v: ("+" if v > 0 else "\u2212" if v < 0 else "") + f"{abs(v):.1f}%"
 REPO = "github.com/jimkliew/aiInvesting"
 
 NAVY=RGBColor(0x0B,0x1F,0x33); GREY=RGBColor(0x66,0x70,0x85); BODY=RGBColor(0x24,0x34,0x47)
@@ -362,7 +363,7 @@ def build_section(prs, n0):
     light_banner(s, 0.55, 6.15, 12.23, 0.72, "Budget math on a laptop: about 50 model calls and 4 minutes per season, so 6 seasons take 20 to 30 minutes. Three personas triple the desk calls, which is why Replay exists.", size=11.5)
 
     # P. Mission Control
-    s = base(prs, n, "Mission Control: the dashboard students run in the browser", "One local page, no server to host, no login. Opens in walkthrough mode",
+    s = base(prs, n, "Mission Control: the dashboard students run in the browser", "One local page, no login. Press Walkthrough for the 17-step guided tour",
              footer="Live page during a real campaign on Oct 23, 2026, qwen3:8b on a Mac Studio."); n += 1
     picture(s, sh("walk.png"), 0.55, 1.10, 8.40, 4.80)
     feats = [("Walkthrough", "17 steps. Each Next reveals the agent events for that stage, highlights the panel, and shows the Python running at that moment plus the background processes."),
@@ -445,7 +446,7 @@ def build_section(prs, n0):
     # S. run it yourself
     s = base(prs, n, "Run it yourself", "Everything is public. Clone it, pull one model, open the page",
              footer="Published Oct 24, 2026: design spec, dashboard and the Python package are in the repo. 52 offline tests; verified end to end against Ollama with real data."); n += 1
-    code_box(s, 0.55, 1.10, 7.3, 2.65, "ollama pull qwen3:8b\ngit clone https://" + REPO + ".git && cd aiInvesting\nuv run python -m aitrader serve          # http://localhost:8000, click Run campaign\n\n# or the command line\nuv run python -m aitrader campaign --quick               # 2 short seasons, about 2 minutes\nuv run python -m aitrader campaign --personas momentum,contrarian --apply approve\nuv run python -m aitrader replay runs/<campaign> --speed 5\nuv run pytest                                            # 52 offline tests", label="Three commands", size=9.5)
+    code_box(s, 0.55, 1.10, 7.3, 2.65, "ollama pull qwen3:8b\ngit clone https://" + REPO + ".git && cd aiInvesting\nuv run python -m aitrader serve          # http://localhost:8000, click Run campaign\n\n# or the command line\nuv run python -m aitrader campaign --quick               # 2 short seasons, ~2 min\nuv run python -m aitrader campaign --personas momentum,contrarian --apply approve\nuv run python -m aitrader replay runs/<campaign> --speed 5\nuv run pytest                                            # 52 offline tests", label="Three commands", size=9.5)
     rect(s, 8.05, 1.10, 4.73, 2.65)
     tb(s, 8.21, 1.20, 4.4, 0.24, "WHICH MODEL FOR WHICH LAPTOP", size=9.5, bold=True, color=BLUE2, fit=False)
     rows = [("8 GB", "qwen3:4b", "slower; run 3 seasons; use Replay in class"), ("16 GB", "qwen3:8b", "the default, verified"), ("32 GB+", "qwen3:14b", "better code, about twice as slow")]
@@ -468,7 +469,7 @@ def build_section(prs, n0):
 
     # T. questions
     s = base(prs, n, "Questions for the room", "Argue from the numbers the dashboard shows",
-             "Four seasons of data, seven agents, one coach. What would convince you the team is skilled rather than lucky?"); n += 1
+             "Six seasons of data, seven agents, one coach. What would convince you the team is skilled rather than lucky?"); n += 1
     qs = [("Did validation predict the season?", "Look at the hollow and filled dots. If a strategy's validation Sharpe does not predict its season Sharpe, what is the selector actually selecting?"),
           ("Would you let the coach apply changes automatically?", "Auto mode closes the loop. Approve mode makes you the risk committee. Which would a real fund choose, and why?"),
           ("Where could lookahead still sneak in?", "The engine lags one bar, the sandbox blocks negative shifts, the perturbation test withholds 60 days. What did we miss?"),

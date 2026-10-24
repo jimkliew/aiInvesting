@@ -53,7 +53,10 @@ class FakeLLM:
         for step in script:
             if step[0] == "tool":
                 _, name, kwargs = step
-                transcript.append(str(tools[name](**kwargs)))
+                try:
+                    transcript.append(str(tools[name](**kwargs)))
+                except Exception as e:  # mirror the real loop: tool errors go back as text
+                    transcript.append(f"error: {type(e).__name__}: {e}")
             else:
                 return step[1]
         return "\n".join(transcript)
