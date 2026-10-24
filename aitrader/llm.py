@@ -7,6 +7,7 @@ error fed back (practice P3). chat_with_tools(): the bounded tool loop
 from __future__ import annotations
 
 import time
+from types import SimpleNamespace
 from typing import Any, Callable
 
 from pydantic import BaseModel
@@ -75,7 +76,8 @@ class LLM:
         return True, f"Ollama ok, {self.model} available"
 
     # ---- raw call ----
-    def _chat(self, messages: list[dict], agent: str, fmt: Any = None, tools: list | None = None, temperature: float = 0.0):
+    def _chat(self, messages: list[dict], agent: str, fmt: Any = None, tools: list | None = None, temperature: float = 0.0,
+              stream: bool = False):
         if self.budget:
             self.budget.spend()
         self.calls += 1
@@ -91,12 +93,12 @@ class LLM:
         if self._think_ok:
             kwargs["think"] = False
         try:
-            resp = self.client.chat(**kwargs)
+            resp = self._call(kwargs, agent, stream)
         except self._ollama.ResponseError as e:
             if "think" in str(e).lower() and self._think_ok:
                 self._think_ok = False
                 kwargs.pop("think", None)
-                resp = self.client.chat(**kwargs)
+                resp = self._call(kwargs, agent, stream)
             else:
                 raise
         ms = int((time.time() - t0) * 1000)
@@ -106,6 +108,25 @@ class LLM:
                           tool_calls=len(resp.message.tool_calls or []) if tools else 0)
         return resp
 
+    def _call(self, kwargs: dict, agent: str, stream: bool):
+        """One Ollama call. When streaming, emit transient llm_token events so the page can show the text being written."""
+        if not stream:
+            return self.client.chat(**kwargs)
+        parts: list[str] = []
+        last_emit = 0.0
+        for chunk in self.client.chat(stream=True, **kwargs):
+            piece = chunk.message.content or ""
+            if piece:
+                parts.append(piece)
+            now = time.time()
+            if self.bus and (now - last_emit > 0.25):
+                last_emit = now
+                self.bus.emit("llm_token", _transient=True, agent=agent, text="".join(parts)[-1200:], chars=sum(map(len, parts)))
+        content = "".join(parts)
+        if self.bus:
+            self.bus.emit("llm_token", _transient=True, agent=agent, text=content[-1200:], chars=len(content), done=True)
+        return SimpleNamespace(message=SimpleNamespace(content=content, tool_calls=None))
+
     # ---- structured output ----
     def structured(self, system: str, user: str, schema: type[BaseModel], agent: str = "", retries: int = 3,
                    temperature: float = 0.0):
@@ -113,7 +134,7 @@ class LLM:
         fmt = schema.model_json_schema()
         last_err = ""
         for attempt in range(1, retries + 1):
-            resp = self._chat(messages, agent, fmt=fmt, temperature=temperature)
+            resp = self._chat(messages, agent, fmt=fmt, temperature=temperature, stream=self.bus is not None)
             content = resp.message.content or ""
             try:
                 return schema.model_validate_json(content)

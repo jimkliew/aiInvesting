@@ -191,6 +191,20 @@ textarea.prompt{width:100%;min-height:320px;font:12px/1.5 var(--mono)}
 .ag .live{grid-column:1/-1;font:10.5px/1.3 var(--mono);color:var(--ink-2);max-height:40px;overflow:hidden;white-space:pre-wrap;word-break:break-all;display:none}
 .ag.thinking .live:not(:empty){display:block}
 .legend i.dot-h{width:8px;height:8px;border-radius:50%;background:var(--ink-3)}
+.row.liverow{background:var(--accent-soft);border-left:3px solid var(--accent)}
+.row.liverow .msg{color:var(--ink-2);max-height:7.5em;overflow:hidden;display:flex;flex-direction:column-reverse}
+.row.liverow .msg::after{content:"▍";color:var(--accent);animation:pulse .8s infinite}
+.board{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(27,36,48,.35);z-index:8}
+.board.on{display:flex}
+.board .card2{background:var(--panel);border-radius:10px;padding:28px 36px;min-width:560px;box-shadow:0 24px 60px rgba(27,36,48,.35);animation:pop .35s ease-out}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.board h2{font-size:14px;color:var(--ink-2);font-weight:500;margin-bottom:6px}
+.board .big{display:grid;grid-template-columns:1fr 1fr;gap:10px 28px;margin:8px 0 6px}
+.board .big b{display:block;font:600 56px/1 var(--cond);letter-spacing:-.01em}
+.board .big small{display:block;color:var(--ink-2);font-size:13px;margin-top:4px}
+.board .verdict{font-size:15px;margin-top:10px}
+.board .verdict.win{color:var(--good)} .board .verdict.loss{color:var(--crit)}
+.board .sub{color:var(--ink-3);font-size:12px;margin-top:14px}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 14px;border-radius:4px;font-size:13px;display:none;z-index:9;max-width:70vw}
 @media (max-width:1520px){.status li.hide-narrow{display:none}}
 @media (max-width:1100px){.work{grid-template-columns:200px 1fr}.season{grid-column:1/-1;border-left:0;border-top:1px solid var(--rule)}.score{grid-template-columns:repeat(3,1fr)}.grid2,.two,.strat-head{grid-template-columns:1fr}.now{grid-template-columns:repeat(3,1fr)}.proc{grid-template-columns:1fr 1fr}.walk{width:calc(100% - 36px)}}
@@ -397,6 +411,7 @@ textarea.prompt{width:100%;min-height:320px;font:12px/1.5 var(--mono)}
   <footer><button id="walk-back">Back</button><div class="bar"><i id="walk-bar"></i></div><button class="primary" id="walk-next">Next</button></footer>
 </aside>
 
+<div class="board" id="board" onclick="this.classList.remove('on')"><div class="card2"><h2 id="board-h">Season scored</h2><div class="big"><div><b id="board-team">–</b><small>Team, half quant book and half desk</small></div><div><b id="board-spy">–</b><small>SPY over the same quarter</small></div></div><div class="verdict" id="board-verdict"></div><div class="sub">Quant book <span id="board-book">–</span>, desk <span id="board-desk">–</span>. Click anywhere to dismiss.</div></div></div>
 <div id="toast" role="status"></div>
 
 <script>
@@ -447,8 +462,17 @@ function rowFor(ev){
 function visible(ev){if(S.filter!=="All"&&phaseOf(ev)!==S.filter)return false;if(S.walk){const r=RANK[ev.kind]??16;return r<=S.step}return true}
 function renderFeed(){rows.innerHTML="";let any=false;for(const ev of S.events){if(!visible(ev))continue;const r=rowFor(ev);if(r){r.classList.remove("new");rows.appendChild(r);any=true}}if(!any)rows.innerHTML='<div class="empty">No events to show yet.</div>';if(S.following)feedEl.scrollTop=feedEl.scrollHeight}
 function appendEvent(ev){if(!visible(ev))return;const r=rowFor(ev);if(!r)return;const e=rows.querySelector(".empty");if(e)e.remove();rows.appendChild(r);if(S.following)feedEl.scrollTop=feedEl.scrollHeight}
+function liveRow(ev){let r=$("liverow");if(ev.kind==="llm_start"||(ev.kind==="llm_token"&&!ev.payload.done)){const a=AGENTS[ev.agent]||[ev.agent||"",'engine'];
+    if(!r){r=document.createElement("div");r.id="liverow";r.className="row liverow";r.innerHTML=`<time>now</time><span><span class="tag ${a[1]}">${esc(a[0])}</span></span><div class="msg"></div>`;const e=rows.querySelector(".empty");if(e)e.remove();rows.appendChild(r)}
+    r.querySelector(".tag").textContent=a[0];r.querySelector(".tag").className=`tag ${a[1]}`;r.querySelector(".msg").textContent=ev.kind==="llm_start"?"":String(ev.payload.text||"");if(S.following)feedEl.scrollTop=feedEl.scrollHeight}
+  else if(r&&(ev.kind==="llm_call"||(ev.kind==="llm_token"&&ev.payload.done))){r.remove()}}
+function showBoard(p,season){$("board-h").textContent=`Season ${season} scored, out of sample`;$("board-team").textContent=fpct(p.team?.total_return);$("board-spy").textContent=fpct(p.spy?.total_return);$("board-book").textContent=fpct(p.book?.total_return);$("board-desk").textContent=fpct(p.desk?.total_return);
+  const d=((p.team?.total_return||0)-(p.spy?.total_return||0))*100;const v=$("board-verdict");v.textContent=d>=0?`Beat SPY by ${d.toFixed(1)} points`:`Lagged SPY by ${Math.abs(d).toFixed(1)} points`;v.className="verdict "+(d>=0?"win":"loss");
+  const b=$("board");b.classList.add("on");clearTimeout(showBoard.t);showBoard.t=setTimeout(()=>b.classList.remove("on"),9000)}
 function handleEvent(ev){
-  if(ev.kind==="llm_start"||ev.kind==="llm_token"){rosterUpdate(ev);return}
+  if(ev.kind==="llm_start"||ev.kind==="llm_token"){rosterUpdate(ev);liveRow(ev);return}
+  if(ev.kind==="llm_call")liveRow(ev);
+  if(ev.kind==="season_scored"&&S.status?.running&&S.live)showBoard(ev.payload,ev.season);
   const key=`${ev.campaign}:${ev.seq}`;if(S.seen.has(key))return;S.seen.add(key);
   rosterUpdate(ev);
   if(ev.campaign&&S.campaign&&ev.campaign!==S.campaign){S.events=[];S.seen=new Set([key]);rows.innerHTML="";for(const k in R)delete R[k];renderRoster()}
@@ -459,7 +483,7 @@ function handleEvent(ev){
   if(ev.kind==="season_started"){$("now-season").textContent=`Season ${ev.season} of ${S.state?.campaign?.seasons||"?"}`;$("now-season-sub").textContent=`${ev.payload.label||""}, ${ev.payload.start||""} to ${ev.payload.end||""}`}
   if(REFRESH.has(ev.kind)){clearTimeout(S.refreshT);S.refreshT=setTimeout(refreshState,400)}
 }
-function connectLive(){if(S.es)S.es.close();S.replaying=false;$("feedtitle").textContent="Live feed";$("livebtn").style.display="none";S.es=new EventSource("/api/events?since=0");S.es.onmessage=e=>handleEvent(JSON.parse(e.data));S.es.onerror=()=>{}}
+function connectLive(){if(S.es)S.es.close();S.replaying=false;S.live=false;$("feedtitle").textContent="Live feed";$("livebtn").style.display="none";S.es=new EventSource("/api/events?since=0");const t0=Date.now();S.es.onmessage=e=>{if(!S.live&&Date.now()-t0>2500)S.live=true;handleEvent(JSON.parse(e.data))};S.es.onerror=()=>{}}
 feedEl.addEventListener("scroll",()=>{S.following=feedEl.scrollHeight-feedEl.scrollTop-feedEl.clientHeight<40;$("follow").classList.toggle("on",S.following);$("follow").textContent=S.following?"Following":"Scroll to bottom to follow"});
 document.querySelectorAll(".feedhead .chip[data-f]").forEach(c=>c.addEventListener("click",()=>{document.querySelectorAll(".feedhead .chip[data-f]").forEach(x=>x.classList.remove("on"));c.classList.add("on");S.filter=c.dataset.f;renderFeed()}));
 
