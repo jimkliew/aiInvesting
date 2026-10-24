@@ -456,7 +456,7 @@ def create_app(runs_dir: str = "runs", data_dir: str = "data", model: str = "qwe
         return {"ticker": ticker, "tickers": [t for t in tickers if t != uni.get("benchmark", "SPY")], "series": series,
                 "decisions": decisions, "seasons": seasons}
 
-    @app.get("/api/runs/{run_id}/trace")
+    @app.get("/api/runs/{run_id:path}/trace")
     def run_trace(run_id: str):
         p = st.runs_dir / run_id / "trace.jsonl"
         if not p.exists():
@@ -467,7 +467,7 @@ def create_app(runs_dir: str = "runs", data_dir: str = "data", model: str = "qwe
     def runs():
         return RunStore.list_campaigns(st.runs_dir)
 
-    @app.post("/api/runs/{run_id}/open")
+    @app.post("/api/runs/{run_id:path}/open")
     def open_run(run_id: str):
         if st.running:
             raise HTTPException(409, "stop the running campaign first")
@@ -478,7 +478,7 @@ def create_app(runs_dir: str = "runs", data_dir: str = "data", model: str = "qwe
         st.bus = None
         return {"ok": True, "campaign": run_id}
 
-    @app.get("/api/runs/{run_id}/replay")
+    @app.get("/api/runs/{run_id:path}/replay")
     async def replay(request: Request, run_id: str, speed: float = 5.0):
         p = st.runs_dir / run_id / "trace.jsonl"
         if not p.exists():
