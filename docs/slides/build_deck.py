@@ -205,8 +205,8 @@ def build_section(prs, n0):
 
     # D2. the map, full width
     s = base(prs, n, "How it all fits together", "Agents do the judgment; plain Python does the schedule, the arithmetic and the bookkeeping",
-             footer="Rendered from docs/architecture.html in the repo. The same diagram is in docs/ARCHITECTURE.md with the season flow, the agent table and the on-disk layout."); n += 1
-    picture(s, sh("architecture.png"), 0.55, 1.10, 12.23, 5.95, valign="top")
+             footer="docs/architecture.png in the repo, drawn by docs/draw_architecture.py. docs/ARCHITECTURE.md adds the agent table, the on-disk layout and where to change things."); n += 1
+    picture(s, sh("architecture_parts.png"), 0.55, 1.05, 12.23, 6.05, valign="top")
 
     # E. how a season runs
     s = base(prs, n, "How a season runs", "One calendar quarter the team has never seen, traded once",

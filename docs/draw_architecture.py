@@ -150,6 +150,15 @@ def main(out="docs/architecture.png"):
     draw_season(ax2)
     fig.savefig(out, dpi=150, bbox_inches="tight", facecolor="white")
     print(out)
+    # the two halves on their own, for slides
+    stem = out[:-4] if out.endswith(".png") else out
+    f1 = plt.figure(figsize=(16, 11.2), dpi=150, facecolor="white")
+    draw_parts(f1.add_subplot(111))
+    f1.savefig(stem + "_parts.png", dpi=150, bbox_inches="tight", facecolor="white")
+    f2 = plt.figure(figsize=(16, 3.4), dpi=150, facecolor="white")
+    draw_season(f2.add_subplot(111))
+    f2.savefig(stem + "_season.png", dpi=150, bbox_inches="tight", facecolor="white")
+    print(stem + "_parts.png", stem + "_season.png")
 
 
 if __name__ == "__main__":
