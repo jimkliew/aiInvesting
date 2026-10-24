@@ -203,6 +203,11 @@ def build_section(prs, n0):
         card(s, x, y, 2.95, 1.95, i+1 if i < 7 else "py", t, bdy, num_fill=fill, title_size=12.5, body_size=12)
     light_banner(s, 0.55, 6.25, 12.23, 0.62, "Only the Data Agent uses tool calling. The other six get everything they need in the prompt, which is cheaper and more reliable for an 8B model.", size=11.5)
 
+    # D2. the map, full width
+    s = base(prs, n, "How it all fits together", "Agents do the judgment; plain Python does the schedule, the arithmetic and the bookkeeping",
+             footer="Rendered from docs/architecture.html in the repo. The same diagram is in docs/ARCHITECTURE.md with the season flow, the agent table and the on-disk layout."); n += 1
+    picture(s, sh("architecture.png"), 0.55, 1.10, 12.23, 5.95, valign="top")
+
     # E. how a season runs
     s = base(prs, n, "How a season runs", "One calendar quarter the team has never seen, traded once",
              "Research on the past, trade the sealed quarter, score it, get coached, repeat."); n += 1

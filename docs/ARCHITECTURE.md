@@ -4,46 +4,9 @@ Read this first. It shows what runs where, which parts are agents and which are 
 
 ## 1. The whole thing in one picture
 
-```mermaid
-flowchart LR
-  subgraph you[You]
-    CLI["python -m aitrader<br/>(__main__.py)"]
-    UI["Mission Control page<br/>(web/static/index.html)"]
-  end
-  UI -- "REST + Server-Sent Events" --> SRV["web/server.py"]
-  CLI --> ORCH
-  SRV --> ORCH["orchestrator.py<br/>the state machine (plain code)"]
+![How aitrader fits together: agents, the deterministic core, the run store and the event bus, and one season phase by phase](architecture.png)
 
-  subgraph agents["Agents (judgment, one prompt + one schema each)"]
-    DATA["Data Agent<br/>agents/data_agent.py"]
-    IDEA["Idea Agent<br/>agents/idea_agent.py"]
-    CODER["Coder Agent<br/>agents/coder_agent.py"]
-    CRITIC["Critic Agent<br/>agents/critic_agent.py"]
-    TRADER["Trader personas<br/>agents/trader_agent.py"]
-    REVIEW["Review Agent, the coach<br/>agents/review_agent.py"]
-  end
-  ORCH --> DATA & IDEA & CODER & CRITIC & TRADER & REVIEW
-  DATA & IDEA & CODER & CRITIC & TRADER & REVIEW --> LLM["llm.py<br/>schema-constrained JSON, retries, budget"]
-  LLM --> OLLAMA[("Ollama<br/>qwen3:8b on your machine")]
-
-  subgraph code["Deterministic core (arithmetic, never calls the model)"]
-    SBX["backtest/sandbox.py + sandbox_runner.py<br/>AST allowlist, subprocess, time limit"]
-    LOOK["backtest/lookahead.py<br/>withhold 60 days, signals must not change"]
-    ENG["backtest/engine.py + metrics.py<br/>one-bar lag, 5 bp cost"]
-    SEL["backtest/selector.py<br/>best validation Sharpe under a turnover cap"]
-    SCORE["backtest/scorer.py<br/>book, desk, team, SPY, baselines"]
-    LEV["levers.py<br/>the only way the coach can change the team"]
-  end
-  CODER -. "code" .-> SBX --> LOOK --> ENG
-  ORCH --> SEL & SCORE
-  REVIEW -. "recommendations" .-> LEV
-
-  STORE[("store.py<br/>runs/&lt;campaign&gt;/ notebook, lessons,<br/>changelog, track record, weights")]
-  BUS["events.py<br/>trace.jsonl + live feed"]
-  ORCH --> STORE & BUS
-  LEV --> STORE
-  SRV -. "reads" .-> STORE & BUS
-```
+Regenerate it with `uv run python docs/draw_architecture.py` (needs matplotlib).
 
 Two rules make this safe to run unattended: **agents never talk to each other** (they read and write typed artifacts in the run store), and **the coach can only act through `levers.py`**, which refuses anything outside its menu or ranges.
 

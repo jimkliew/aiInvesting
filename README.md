@@ -49,6 +49,8 @@ The page at `localhost:8000` shows the live feed of every agent turn, the season
 
 Start with [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): one diagram of every part, the season flow phase by phase, a table of the agents (prompt, inputs, outputs, tools), the deterministic core, what lands on disk, and where to change things.
 
+![How aitrader fits together: agents, the deterministic core, the run store and the event bus](docs/architecture.png)
+
 ## Layout
 
 ```
