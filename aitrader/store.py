@@ -243,9 +243,14 @@ class RunStore:
         out = []
         if not root.exists():
             return out
-        for d in sorted(root.iterdir()):
-            if d.is_dir() and (d / "campaign.json").exists():
-                s = RunStore(root, d.name)
-                out.append({"id": d.name, "meta": s.meta(), "seasons_done": s.seasons_done(),
-                            "track_record": s.track_record()})
+        candidates = [d for d in sorted(root.iterdir()) if d.is_dir()]
+        rec = root / "recorded"
+        if rec.exists():
+            candidates += [d for d in sorted(rec.iterdir()) if d.is_dir()]
+        for d in candidates:
+            if (d / "campaign.json").exists():
+                rid = str(d.relative_to(root))
+                s = RunStore(root, rid)
+                out.append({"id": rid, "meta": s.meta(), "seasons_done": s.seasons_done(),
+                            "track_record": s.track_record(), "recorded": rid.startswith("recorded/")})
         return out

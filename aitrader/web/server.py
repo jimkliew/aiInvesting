@@ -212,8 +212,15 @@ def build_state(st: AppState) -> dict[str, Any]:
                 if "total_return" in m:
                     leaderboard.append({"name": bname, "kind": "baseline", "val_sharpe": None, "season_return": m["total_return"]})
         label = next((s["label"] for s in seasons if s["n"] == n), f"Season {n}")
+        holdings = {}
+        for kind in ("book", "desk"):
+            w = store.weights(n, f"{kind}_weights")
+            if w is not None and len(w):
+                last = w.iloc[-1]
+                holdings[kind] = {t: round(float(v), 4) for t, v in last.items() if v and v > 0.0005}
         out["this_season"] = {
             "n": n, "label": label, "scored": sc is not None, "partial": sc.get("partial") if sc else False,
+            "holdings": holdings,
             "book": book, "weeks_done": weeks_done, "weeks_total": len({}),
             "figures": {k: sc[k]["total_return"] for k in ("team", "spy", "book", "desk")} if sc else None,
             "daily": sc.get("daily") if sc else None, "leaderboard": leaderboard,
@@ -232,7 +239,8 @@ def create_app(runs_dir: str = "runs", data_dir: str = "data", model: str = "qwe
 
     @app.get("/")
     def index():
-        return FileResponse(STATIC / "index.html")
+        # the page changes often while the lab is being developed; never let the browser cache it
+        return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-store"})
 
     @app.get("/favicon.ico")
     def favicon():
@@ -420,11 +428,46 @@ def create_app(runs_dir: str = "runs", data_dir: str = "data", model: str = "qwe
         return {"season": n, "label": s.label, "season_start": str(s.start.date()), "book": book, "tickers": tickers, "ticker": t,
                 "max_weight": round(maxw, 4), "series": series}
 
+    @app.get("/api/prices")
+    def prices_for(ticker: str = ""):
+        """Close and 50-day average for one ticker across the campaign, with every desk decision on it."""
+        if not st.store:
+            raise HTTPException(404, "no campaign")
+        meta = st.store.meta()
+        uni = meta.get("universe") or {}
+        tickers = list(uni.get("tickers") or []) + [uni.get("benchmark", "SPY")]
+        if not ticker:
+            ticker = tickers[0] if tickers else ""
+        prices = _prices_cached(st.data_dir, tickers)
+        if prices is None or ticker not in prices.columns:
+            raise HTTPException(404, f"no cached prices for {ticker}")
+        cal = calendar(uni.get("campaign_start", "2025-01-01"), meta.get("seasons") or 6, uni.get("start", "2015-01-01"))
+        start = cal[0].start - pd.DateOffset(months=3)
+        end = min(cal[-1].end, prices.index.max())
+        px = prices[ticker]
+        sma50 = px.rolling(50).mean()
+        sma200 = px.rolling(200).mean()
+        win = px.loc[start:end]
+        series = [{"date": str(d.date()), "close": round(float(px[d]), 4) if pd.notna(px[d]) else None,
+                   "sma50": round(float(sma50[d]), 4) if pd.notna(sma50[d]) else None,
+                   "sma200": round(float(sma200[d]), 4) if pd.notna(sma200[d]) else None} for d in win.index]
+        decisions = [{k: v for k, v in d.items() if k != "snapshot"} for d in st.store.decisions() if d.get("ticker") == ticker]
+        seasons = [{"n": s.n, "label": s.label, "start": str(s.start.date()), "end": str(min(s.end, end).date())} for s in cal if s.start <= end]
+        return {"ticker": ticker, "tickers": [t for t in tickers if t != uni.get("benchmark", "SPY")], "series": series,
+                "decisions": decisions, "seasons": seasons}
+
+    @app.get("/api/runs/{run_id:path}/trace")
+    def run_trace(run_id: str):
+        p = st.runs_dir / run_id / "trace.jsonl"
+        if not p.exists():
+            raise HTTPException(404, run_id)
+        return [json.loads(e.to_json()) for e in read_trace(p)]
+
     @app.get("/api/runs")
     def runs():
         return RunStore.list_campaigns(st.runs_dir)
 
-    @app.post("/api/runs/{run_id}/open")
+    @app.post("/api/runs/{run_id:path}/open")
     def open_run(run_id: str):
         if st.running:
             raise HTTPException(409, "stop the running campaign first")
@@ -435,7 +478,7 @@ def create_app(runs_dir: str = "runs", data_dir: str = "data", model: str = "qwe
         st.bus = None
         return {"ok": True, "campaign": run_id}
 
-    @app.get("/api/runs/{run_id}/replay")
+    @app.get("/api/runs/{run_id:path}/replay")
     async def replay(request: Request, run_id: str, speed: float = 5.0):
         p = st.runs_dir / run_id / "trace.jsonl"
         if not p.exists():

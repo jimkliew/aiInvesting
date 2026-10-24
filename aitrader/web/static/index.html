@@ -36,11 +36,12 @@ h2{font-size:15px}
 h3{font-size:13px;color:var(--ink-2)}
 code{font:12px var(--mono)}
 
-.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 22px;padding:10px 18px;border-bottom:1px solid var(--rule);background:var(--panel)}
+.top{display:flex;flex-wrap:nowrap;align-items:center;gap:12px 22px;padding:10px 18px;border-bottom:1px solid var(--rule);background:var(--panel);height:56px}
 .brand{font-size:17px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
 .brand span{color:var(--ink-2);font-weight:400;margin-left:8px}
 .status{list-style:none;margin:0;padding:0;display:flex;gap:16px;color:var(--ink-2);flex:1;flex-wrap:nowrap}
-.status li{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.status li{display:flex;align-items:center;gap:7px;white-space:nowrap;max-width:300px}
+.status li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--ink-3);display:inline-block}
 .dot.ok{background:var(--good)} .dot.bad{background:var(--crit)} .dot.busy{background:var(--accent)}
 .controls{display:flex;gap:6px;align-items:center;margin-left:auto}
@@ -50,10 +51,10 @@ code{font:12px var(--mono)}
 .form .row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
 
 .now{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--rule);background:var(--paper)}
-.now > div{padding:8px 18px;border-right:1px solid var(--rule-2)}
+.now > div{padding:8px 18px;border-right:1px solid var(--rule-2);height:62px;overflow:hidden}
 .now > div:last-child{border-right:0}
-.now b{display:block;font-weight:600}
-.now span{color:var(--ink-2);font-size:13px}
+.now b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.now span{display:block;color:var(--ink-2);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .meter{height:5px;background:var(--rule-2);border-radius:3px;margin-top:6px;overflow:hidden}
 .meter i{display:block;height:100%;width:0;background:var(--accent)}
 
@@ -61,7 +62,8 @@ code{font:12px var(--mono)}
 .work > *{min-height:0;overflow:auto}
 .rail{border-right:1px solid var(--rule);padding:10px 0;background:var(--panel)}
 .rail h3{padding:0 14px 8px}
-.s{display:grid;grid-template-columns:56px 1fr;gap:0 8px;align-items:center;padding:8px 14px 8px 11px;border-left:3px solid transparent}
+.s{display:grid;grid-template-columns:56px 1fr;gap:0 8px;align-items:center;padding:8px 14px 8px 11px;border-left:3px solid transparent;height:58px;overflow:hidden}
+.s .r{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .s.done .n{color:var(--ink-2)}
 .s.live{border-left-color:var(--accent);background:var(--accent-soft)}
 .s.queued{color:var(--ink-3)}
@@ -93,11 +95,12 @@ code{font:12px var(--mono)}
 
 .season{border-left:1px solid var(--rule);padding:12px 16px;background:var(--panel)}
 .season h2{margin-bottom:2px}
-.season .sub{color:var(--ink-2);font-size:13px;margin-bottom:10px}
+.season .sub{color:var(--ink-2);font-size:13px;margin-bottom:10px;height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .figs{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-bottom:10px}
 .fig{border-top:1px solid var(--rule-2);padding-top:6px}
 .fig small{display:flex;align-items:center;gap:6px;color:var(--ink-2);font-size:12px}
 .fig small i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.fig{height:62px}
 .fig b{display:block;font:600 30px/1.1 var(--cond);letter-spacing:-.01em}
 .spark{width:100%;height:84px;display:block;margin:4px 0 8px}
 .mini td,.mini th{padding:4px 6px;font-size:12.5px}
@@ -110,7 +113,7 @@ code{font:12px var(--mono)}
 .panel.on{display:block}
 
 .score{display:grid;grid-template-columns:repeat(6,1fr);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin-bottom:18px}
-.score > div{padding:10px 14px 12px;border-right:1px solid var(--rule-2)}
+.score > div{padding:10px 14px 12px;border-right:1px solid var(--rule-2);height:84px;overflow:hidden}
 .score > div:last-child{border-right:0}
 .score small{color:var(--ink-2);font-size:12.5px;display:block}
 .score b{font:600 34px/1.1 var(--cond);letter-spacing:-.01em}
@@ -178,6 +181,51 @@ textarea.prompt{width:100%;min-height:320px;font:12px/1.5 var(--mono)}
 .walk footer .bar i{display:block;height:100%;background:var(--accent)}
 .spot{outline:3px solid var(--accent);outline-offset:-3px;box-shadow:0 0 0 5px var(--accent-soft);position:relative;z-index:2}
 
+.roster{display:grid;gap:8px;padding:8px 18px;border-bottom:1px solid var(--rule);background:var(--panel)}
+.ag{display:grid;grid-template-columns:30px 1fr;grid-template-rows:18px 16px 14px 30px;gap:1px 8px;align-items:center;padding:6px 8px;border:1px solid var(--rule-2);border-radius:5px;background:var(--paper);height:94px;overflow:hidden}
+.ag .mark{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:600 12px var(--font);color:var(--ink);grid-row:span 2}
+.ag b{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag .st{font-size:11.5px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag .calls{font-size:11px;color:var(--ink-3);grid-column:1/-1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag.thinking{border-color:var(--accent);background:var(--accent-soft)}
+.ag.thinking .st{color:var(--accent);font-weight:600}
+.ag.thinking .st::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:6px;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:.2}50%{opacity:1}}
+.ag .live{grid-column:1/-1;font:10px/1.3 var(--mono);color:var(--ink-2);height:28px;overflow:hidden;white-space:pre-wrap;word-break:break-all;display:block}
+.legend i.dot-h{width:8px;height:8px;border-radius:50%;background:var(--ink-3)}
+.row.liverow{background:var(--accent-soft);border-left:3px solid var(--accent)}
+.row.liverow .msg{color:var(--ink-2);height:6em;overflow:hidden;display:flex;flex-direction:column-reverse}
+.row.liverow .msg::after{content:"▍";color:var(--accent);animation:pulse .8s infinite}
+.board{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(27,36,48,.35);z-index:8}
+.board.on{display:flex}
+.board .card2{background:var(--panel);border-radius:10px;padding:28px 36px;min-width:560px;box-shadow:0 24px 60px rgba(27,36,48,.35);animation:pop .35s ease-out}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.board h2{font-size:14px;color:var(--ink-2);font-weight:500;margin-bottom:6px}
+.board .big{display:grid;grid-template-columns:1fr 1fr;gap:10px 28px;margin:8px 0 6px}
+.board .big b{display:block;font:600 56px/1 var(--cond);letter-spacing:-.01em}
+.board .big small{display:block;color:var(--ink-2);font-size:13px;margin-top:4px}
+.board .verdict{font-size:15px;margin-top:10px}
+.board .verdict.win{color:var(--good)} .board .verdict.loss{color:var(--crit)}
+.board .sub{color:var(--ink-3);font-size:12px;margin-top:14px}
+.hold{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin:2px 0 10px;height:176px;overflow:hidden;align-content:start}
+.hold h3{margin-bottom:4px}
+.hrow{display:grid;grid-template-columns:44px 1fr 38px;gap:6px;align-items:center;font-size:11.5px;color:var(--ink-2);margin:2px 0}
+.hrow i{display:block;height:8px;border-radius:2px;background:var(--quant);min-width:1px}
+.hrow.desk i{background:var(--desk)}
+.hrow b{text-align:right;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.hold .none{font-size:11.5px;color:var(--ink-3)}
+.scrub{display:none;align-items:center;gap:10px;padding:6px 14px;border-bottom:1px solid var(--rule-2);background:var(--panel);font-size:12px;color:var(--ink-2);position:sticky;top:42px;z-index:1}
+.scrub.on{display:flex}
+.scrub input[type=range]{flex:1}
+.scrub .marks{position:relative;height:0}
+body.present{font-size:16px}
+body.present .work{height:54vh}
+body.present .rows{font-size:14px}
+body.present .ag b{font-size:14px} body.present .ag .st{font-size:13px}
+body.present .fig b{font-size:36px}
+body.present .tabbar button[data-tab=notebook],body.present .tabbar button[data-tab=prompts],body.present .tabbar button[data-tab=processes]{display:none}
+body.present .spot{box-shadow:0 0 0 9999px rgba(27,36,48,.42)}
+body.present .score b{font-size:40px}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 14px;border-radius:4px;font-size:13px;display:none;z-index:9;max-width:70vw}
 @media (max-width:1520px){.status li.hide-narrow{display:none}}
 @media (max-width:1100px){.work{grid-template-columns:200px 1fr}.season{grid-column:1/-1;border-left:0;border-top:1px solid var(--rule)}.score{grid-template-columns:repeat(3,1fr)}.grid2,.two,.strat-head{grid-template-columns:1fr}.now{grid-template-columns:repeat(3,1fr)}.proc{grid-template-columns:1fr 1fr}.walk{width:calc(100% - 36px)}}
@@ -194,6 +242,7 @@ textarea.prompt{width:100%;min-height:320px;font:12px/1.5 var(--mono)}
     <li id="st-campaign"><span>No campaign</span></li>
   </ul>
   <div class="controls">
+    <button id="presentbtn" title="Bigger type, fewer tabs, spotlight during the walkthrough">Present</button>
     <button id="walkbtn">Walkthrough</button>
     <button class="primary" id="runbtn">Run campaign</button>
     <button id="pausebtn" disabled>Pause</button>
@@ -220,6 +269,8 @@ textarea.prompt{width:100%;min-height:320px;font:12px/1.5 var(--mono)}
   <div><b id="now-time">0.0 min</b><span>this season</span></div>
 </section>
 
+<section class="roster" id="roster" aria-label="The team"></section>
+
 <main class="work">
   <aside class="rail" id="rail" aria-label="Seasons">
     <h3>Seasons, team vs SPY</h3>
@@ -231,6 +282,7 @@ textarea.prompt{width:100%;min-height:320px;font:12px/1.5 var(--mono)}
       <button class="chip on" data-f="All">All</button><button class="chip" data-f="Data">Data</button><button class="chip" data-f="Research">Research</button><button class="chip" data-f="Trading">Trading</button><button class="chip" data-f="Review">Review</button>
       <button class="chip" id="follow">Following</button>
     </div>
+    <div class="scrub" id="scrub"><span id="scrub-label">Replay</span><input type="range" id="scrub-range" min="0" max="0" value="0"><span id="scrub-pos">0 / 0</span><button class="chip" id="scrub-play">Pause</button></div>
     <div class="rows" id="rows"><div class="empty">Waiting for events. Start a campaign, open a previous run, or replay one from the Runs tab.</div></div>
   </section>
   <aside class="season" id="seasonpane" aria-label="This season">
@@ -243,6 +295,7 @@ textarea.prompt{width:100%;min-height:320px;font:12px/1.5 var(--mono)}
       <div class="fig"><small><i style="background:var(--desk)"></i>Desk</small><b id="ts-desk">–</b></div>
     </div>
     <svg class="spark" id="spark" role="img" aria-label="This season's equity"></svg>
+    <div class="hold" id="holdings"></div>
     <table class="mini"><thead><tr><th>Strategy</th><th class="num">Val Sharpe</th><th class="num">Season</th></tr></thead><tbody id="ts-lb"></tbody></table>
   </aside>
 </main>
@@ -321,7 +374,15 @@ textarea.prompt{width:100%;min-height:320px;font:12px/1.5 var(--mono)}
   </div>
 
   <div class="panel" id="tab-desk">
-    <h2>Trading desk, every weekly decision</h2>
+    <div class="chart" id="deskwrap">
+      <h2>Decisions on the price</h2>
+      <div class="lead">Every call the desk made on one ticker. Green up is BUY, red down is SELL, a grey dot is HOLD. Hover for the persona's reason and the one-month outcome. Shaded bands are the sealed quarters; the orange and grey lines are the 50 and 200-day averages the persona reads in its snapshot.</div>
+      <div class="tickers" id="desk-tickers"></div>
+      <div class="legend"><span><i style="background:var(--ink)"></i>Close</span><span><i style="background:var(--quant)"></i>sma50</span><span><i class="ref" style="background:var(--ink-3)"></i>sma200</span><span><i class="tri in"></i>BUY</span><span><i class="tri out"></i>SELL</span><span><i class="dot-h"></i>HOLD</span><span><i class="band"></i>Season</span></div>
+      <svg id="deskchart" style="width:100%;height:380px;display:block"></svg>
+      <div class="tip" id="desktip"></div>
+    </div>
+    <h2 style="margin-top:16px">Trading desk, every decision</h2>
     <p class="note">The persona sees only data up to the decision date. The engine fills at the next open. The one-month outcome is filled in after the fact for the coach.</p>
     <table><thead><tr><th>Season</th><th>Week</th><th>Date</th><th>Persona</th><th>Ticker</th><th>Action</th><th class="num">Weight</th><th class="num">Conf.</th><th>Stated reason</th><th class="num">1-month outcome</th></tr></thead><tbody id="desk"></tbody></table>
   </div>
@@ -334,7 +395,13 @@ textarea.prompt{width:100%;min-height:320px;font:12px/1.5 var(--mono)}
   </div>
 
   <div class="panel" id="tab-changelog">
-    <h2>Changelog, what changed between seasons and why</h2>
+    <div class="chart" id="timelinewrap">
+      <h2>The coach's changes, season by season</h2>
+      <div class="lead">One lane per thing the coach touched. A filled marker is a change still in force; a hollow one was reverted. Lessons are speech bubbles, parameter moves show the new value, family focus is a diamond. Hover for the rationale.</div>
+      <svg id="timeline" style="width:100%;height:220px;display:block"></svg>
+      <div class="tip" id="timelinetip"></div>
+    </div>
+    <h2 style="margin-top:14px">Changelog, what changed between seasons and why</h2>
     <table><thead><tr><th class="num">Change</th><th>After season</th><th>Lever</th><th>Target</th><th>Change</th><th>Rationale</th><th>Source</th><th>Status</th></tr></thead><tbody id="changelog"></tbody></table>
   </div>
 
@@ -374,6 +441,7 @@ textarea.prompt{width:100%;min-height:320px;font:12px/1.5 var(--mono)}
   <footer><button id="walk-back">Back</button><div class="bar"><i id="walk-bar"></i></div><button class="primary" id="walk-next">Next</button></footer>
 </aside>
 
+<div class="board" id="board" onclick="this.classList.remove('on')"><div class="card2"><h2 id="board-h">Season scored</h2><div class="big"><div><b id="board-team">–</b><small>Team, half quant book and half desk</small></div><div><b id="board-spy">–</b><small>SPY over the same quarter</small></div></div><div class="verdict" id="board-verdict"></div><div class="sub">Quant book <span id="board-book">–</span>, desk <span id="board-desk">–</span>. Click anywhere to dismiss.</div></div></div>
 <div id="toast" role="status"></div>
 
 <script>
@@ -394,7 +462,7 @@ const AGENTS={idea:["Idea Agent","idea"],coder:["Coder Agent","coder"],critic:["
 const PHASE_LABEL={data:"Data",research:"Research",select:"Research",trade:"Trading",score:"Scoring",review:"Review",apply:"Review"};
 const RANK={campaign_started:1,data_fetch:1,data_ready:1,season_started:2,hypotheses:3,code:4,sandbox_rejected:5,sandbox_ok:5,lookahead_failed:5,backtest:6,turnover_feedback:6,critic:7,strategy_failed:7,budget_strategies:8,candidate_skipped:9,selector_fallback:9,book_selected:9,book_trading:10,desk_open:10,decision:11,fill:11,season_scored:13,review:14,change_applied:15,invalid_recommendation:15,pending_recommendations:15,recommendation_rejected:15,season_done:16,campaign_done:16,stopped:16,budget_exceeded:16,agent_error:16,campaign_error:16,llm_retry:16,season_skipped:16,season_unavailable:16,score_skipped:16,review_skipped:16};
 const REFRESH=new Set(["campaign_started","data_ready","season_started","book_selected","season_scored","review","change_applied","campaign_done","stopped","campaign_error","phase","pending_recommendations"]);
-const SKIP=new Set(["llm_call"]);
+const SKIP=new Set(["llm_call","llm_start","llm_token"]);
 
 const S={status:null,state:null,events:[],seen:new Set(),campaign:null,walk:false,step:0,filter:"All",following:true,es:null,replayEs:null,replaying:false,curTicker:null,strategy:null,refreshT:null};
 
@@ -424,9 +492,22 @@ function rowFor(ev){
 function visible(ev){if(S.filter!=="All"&&phaseOf(ev)!==S.filter)return false;if(S.walk){const r=RANK[ev.kind]??16;return r<=S.step}return true}
 function renderFeed(){rows.innerHTML="";let any=false;for(const ev of S.events){if(!visible(ev))continue;const r=rowFor(ev);if(r){r.classList.remove("new");rows.appendChild(r);any=true}}if(!any)rows.innerHTML='<div class="empty">No events to show yet.</div>';if(S.following)feedEl.scrollTop=feedEl.scrollHeight}
 function appendEvent(ev){if(!visible(ev))return;const r=rowFor(ev);if(!r)return;const e=rows.querySelector(".empty");if(e)e.remove();rows.appendChild(r);if(S.following)feedEl.scrollTop=feedEl.scrollHeight}
+function liveRow(ev){let r=$("liverow");if(ev.kind==="llm_start"||(ev.kind==="llm_token"&&!ev.payload.done)){const a=AGENTS[ev.agent]||[ev.agent||"",'engine'];
+    if(!r){r=document.createElement("div");r.id="liverow";r.className="row liverow";r.innerHTML=`<time>now</time><span><span class="tag ${a[1]}">${esc(a[0])}</span></span><div class="msg"></div>`;const e=rows.querySelector(".empty");if(e)e.remove();rows.appendChild(r)}
+    r.querySelector(".tag").textContent=a[0];r.querySelector(".tag").className=`tag ${a[1]}`;r.querySelector(".msg").textContent=ev.kind==="llm_start"?"":String(ev.payload.text||"");if(S.following)feedEl.scrollTop=feedEl.scrollHeight}
+  else if(r&&(ev.kind==="llm_call"||(ev.kind==="llm_token"&&ev.payload.done))){r.remove()}}
+function showBoard(p,season){$("board-h").textContent=`Season ${season} scored, out of sample`;$("board-team").textContent=fpct(p.team?.total_return);$("board-spy").textContent=fpct(p.spy?.total_return);$("board-book").textContent=fpct(p.book?.total_return);$("board-desk").textContent=fpct(p.desk?.total_return);
+  const d=((p.team?.total_return||0)-(p.spy?.total_return||0))*100;const v=$("board-verdict");v.textContent=d>=0?`Beat SPY by ${d.toFixed(1)} points`:`Lagged SPY by ${Math.abs(d).toFixed(1)} points`;v.className="verdict "+(d>=0?"win":"loss");
+  const b=$("board");b.classList.add("on");clearTimeout(showBoard.t);showBoard.t=setTimeout(()=>b.classList.remove("on"),9000)}
 function handleEvent(ev){
+  if(ev.kind==="llm_start"||ev.kind==="llm_token"){rosterUpdate(ev);liveRow(ev);return}
+  if(ev.kind==="llm_call")liveRow(ev);
+  if(ev.kind==="fill"&&ev.payload.weights){S.liveDesk=ev.payload.weights;if(S.state?.this_season)renderHoldings(S.state.this_season)}
+  if(ev.kind==="season_started")S.liveDesk=null;
+  if(ev.kind==="season_scored"&&S.status?.running&&S.live)showBoard(ev.payload,ev.season);
   const key=`${ev.campaign}:${ev.seq}`;if(S.seen.has(key))return;S.seen.add(key);
-  if(ev.campaign&&S.campaign&&ev.campaign!==S.campaign){S.events=[];S.seen=new Set([key]);rows.innerHTML=""}
+  rosterUpdate(ev);
+  if(ev.campaign&&S.campaign&&ev.campaign!==S.campaign){S.events=[];S.seen=new Set([key]);rows.innerHTML="";for(const k in R)delete R[k];renderRoster()}
   if(ev.campaign)S.campaign=ev.campaign;
   S.events.push(ev);appendEvent(ev);
   if(ev.kind==="phase"){$("now-phase").textContent="Phase: "+ev.payload.name;$("now-phase-sub").textContent=PHASE_LABEL[ev.payload.name]||""}
@@ -434,7 +515,7 @@ function handleEvent(ev){
   if(ev.kind==="season_started"){$("now-season").textContent=`Season ${ev.season} of ${S.state?.campaign?.seasons||"?"}`;$("now-season-sub").textContent=`${ev.payload.label||""}, ${ev.payload.start||""} to ${ev.payload.end||""}`}
   if(REFRESH.has(ev.kind)){clearTimeout(S.refreshT);S.refreshT=setTimeout(refreshState,400)}
 }
-function connectLive(){if(S.es)S.es.close();S.replaying=false;$("feedtitle").textContent="Live feed";$("livebtn").style.display="none";S.es=new EventSource("/api/events?since=0");S.es.onmessage=e=>handleEvent(JSON.parse(e.data));S.es.onerror=()=>{}}
+function connectLive(){if(S.es)S.es.close();S.replaying=false;S.live=false;$("feedtitle").textContent="Live feed";$("livebtn").style.display="none";S.es=new EventSource("/api/events?since=0");const t0=Date.now();S.es.onmessage=e=>{if(!S.live&&Date.now()-t0>2500)S.live=true;handleEvent(JSON.parse(e.data))};S.es.onerror=()=>{}}
 feedEl.addEventListener("scroll",()=>{S.following=feedEl.scrollHeight-feedEl.scrollTop-feedEl.clientHeight<40;$("follow").classList.toggle("on",S.following);$("follow").textContent=S.following?"Following":"Scroll to bottom to follow"});
 document.querySelectorAll(".feedhead .chip[data-f]").forEach(c=>c.addEventListener("click",()=>{document.querySelectorAll(".feedhead .chip[data-f]").forEach(x=>x.classList.remove("on"));c.classList.add("on");S.filter=c.dataset.f;renderFeed()}));
 
@@ -456,6 +537,7 @@ function renderStatus(){
 function renderState(){
   const st=S.state;if(!st||!st.campaign){return}
   const c=st.campaign;
+  if(!$("roster").children.length||$("roster").children.length!==rosterAgents().length)renderRoster();
   if(!c.running){$("now-phase").textContent=c.error?"Error":"Finished";$("now-phase-sub").textContent=c.error||`${st.seasons.filter(s=>s.state==="done").length} seasons scored`}
   if(c.season==null){const done=st.seasons.filter(s=>s.state==="done");if(done.length){$("now-season").textContent=`${done.length} of ${c.seasons} seasons`;$("now-season-sub").textContent=`${c.id}`}}
   // ladder
@@ -468,6 +550,7 @@ function renderState(){
   if(t){$("ts-title").textContent=`Season ${t.n}, ${t.label}`;$("ts-sub").textContent=t.scored?(t.partial?"Scored, partial quarter":"Scored, full quarter"):`Trading, ${t.decisions_count} decisions so far`;
     const f=t.figures||{};$("ts-team").textContent=fpct(f.team);$("ts-spy").textContent=fpct(f.spy);$("ts-book").textContent=fpct(f.book);$("ts-desk").textContent=fpct(f.desk);
     drawSpark(t.daily||[]);
+    renderHoldings(t);
     $("ts-lb").innerHTML=(t.leaderboard||[]).map(r=>`<tr><td>${esc(r.name)}${r.is_book?", quant book":""}</td><td class="num">${fnum(r.val_sharpe)}</td><td class="num">${fpct(r.season_return)}</td></tr>`).join("")||"<tr><td colspan=3 class='note'>No candidates yet</td></tr>";
     $("season-h").textContent=`Leaderboard, season ${t.n} (${t.label})`;
     $("season-lb").innerHTML=(t.leaderboard||[]).map(r=>`<tr><td>${esc(r.name)}${r.is_book?" (quant book)":""}</td><td>${r.kind}</td><td class="num">${fnum(r.val_sharpe)}</td><td class="num">${fpct(r.season_return)}</td></tr>`).join("");
@@ -574,12 +657,12 @@ function drawPrice(st){const svg=$("price"),tip=$("pricetip");svg.innerHTML="";c
 async function loadTab(name){
   try{
     if(name==="notebook"){const nb=await api("/api/notebook");$("nb").innerHTML=nb.slice().reverse().map(e=>`<tr><td>S${e.season}</td><td>${esc(e.name)}</td><td>${esc(e.family||"")}</td><td>${esc(e.idea||"")}</td><td class="num">${fnum(e.train?.sharpe)}</td><td class="num">${fnum(e.val?.sharpe)}</td><td class="num">${e.val?`${(e.val.turnover*100).toFixed(0)}%`:"–"}</td><td>${e.review?`<span class="verdict ${e.review.verdict.toLowerCase()}">${e.review.verdict}</span> ${esc((e.review.concerns||[]).join("; "))}`:esc(e.error||"")}</td><td>${e.retired?"retired":esc(e.status)}</td><td>${e.code?`<details><summary>code</summary><pre class="code">${esc(e.code)}</pre></details>`:""}</td></tr>`).join("")||"<tr><td colspan=10 class='note'>Nothing tried yet</td></tr>"}
-    if(name==="desk"){const d=await api("/api/desk");$("desk").innerHTML=d.slice().reverse().slice(0,400).map(r=>`<tr><td>S${r.season}</td><td>${r.week}</td><td>${r.date}</td><td>${esc(r.persona)}</td><td>${esc(r.ticker)}</td><td>${r.action}</td><td class="num">${fnum(r.from_weight)} to ${fnum(r.target_weight)}</td><td class="num">${fnum(r.confidence)}</td><td>${esc(r.reason)}</td><td class="num">${r.outcome_1m==null?"pending":`<i class="sign ${r.outcome_1m>=0?"up":"down"}"></i>${pct(r.outcome_1m*100)}`}</td></tr>`).join("")||"<tr><td colspan=10 class='note'>No decisions yet</td></tr>"}
+    if(name==="desk"){loadDesk();const d=await api("/api/desk");$("desk").innerHTML=d.slice().reverse().slice(0,400).map(r=>`<tr><td>S${r.season}</td><td>${r.week}</td><td>${r.date}</td><td>${esc(r.persona)}</td><td>${esc(r.ticker)}</td><td>${r.action}</td><td class="num">${fnum(r.from_weight)} to ${fnum(r.target_weight)}</td><td class="num">${fnum(r.confidence)}</td><td>${esc(r.reason)}</td><td class="num">${r.outcome_1m==null?"pending":`<i class="sign ${r.outcome_1m>=0?"up":"down"}"></i>${pct(r.outcome_1m*100)}`}</td></tr>`).join("")||"<tr><td colspan=10 class='note'>No decisions yet</td></tr>"}
     if(name==="reviews"){const [rv,pd,cl]=await Promise.all([api("/api/reviews"),api("/api/pending"),api("/api/changelog")]);
       $("pending").innerHTML=pd.filter(p=>p.status==="pending").length?`<div class="card"><h2>Waiting for your decision <small>Ask-me mode</small></h2>`+pd.map((p,i)=>p.status!=="pending"?"":`<div class="rec"><div class="id">${i+1}</div><div><code>${esc(p.lever)}(${esc(p.target)})</code> ${esc(p.change)} <span class="note">${esc(p.rationale)}</span></div><div><div class="st pending">Waiting</div><div class="btns"><button onclick="decidePending(${i},'accept')">Accept</button><button onclick="decidePending(${i},'reject')">Reject</button></div></div></div>`).join("")+"</div>":"";
       const byRec=(season,r)=>cl.find(c=>c.season===season&&c.lever===r.lever&&c.target===r.target);
       $("reviews").innerHTML=rv.slice().reverse().map(r=>`<div class="card"><h2>After season ${r.season} <small>${esc(r.assessment||"").slice(0,0)}</small></h2><p><b>Assessment.</b> ${esc(r.assessment)}</p><p><b>What worked.</b> ${esc(r.what_worked)}</p><p><b>What failed.</b> ${esc(r.what_failed)}</p>${(r.recommendations||[]).map((x,i)=>{const c=byRec(r.season,x);const st=c?(c.status==="reverted"?"reverted":"applied"):"rejected";return`<div class="rec"><div class="id">${c?c.id:"–"}</div><div><code>${esc(x.lever)}(${esc(x.target)})</code> ${esc(x.change)} <span class="note">${esc(x.rationale)}</span><br><small>Expect: ${esc(x.expected_effect)}. Revert if: ${esc(x.revert_if)}.</small></div><div class="st ${st}">${c?(c.status==="reverted"?"Reverted by "+c.reverted_by:"Applied"):"Not applied"}</div></div>`}).join("")}<details><summary class="note">Packet the coach received</summary><pre class="code">${esc(r.packet||"")}</pre></details></div>`).join("")||"<p class='note'>No review yet.</p>"}
-    if(name==="changelog"){const cl=await api("/api/changelog");$("changelog").innerHTML=cl.map(c=>`<tr><td class="num">${c.id}</td><td>S${c.season}</td><td>${esc(c.lever)}</td><td>${esc(c.target||"")}</td><td>${esc(String(c.change||""))}${c.before!=null?` <span class="note">(was ${esc(JSON.stringify(c.before))})</span>`:""}</td><td>${esc(c.rationale||"")}</td><td>${esc(c.source||"coach")}</td><td><span class="verdict ${c.status}">${c.status}${c.reverted_by?" by "+c.reverted_by:""}</span></td></tr>`).join("")||"<tr><td colspan=8 class='note'>No changes yet</td></tr>"}
+    if(name==="changelog"){const cl=await api("/api/changelog");drawTimeline(cl);$("changelog").innerHTML=cl.map(c=>`<tr><td class="num">${c.id}</td><td>S${c.season}</td><td>${esc(c.lever)}</td><td>${esc(c.target||"")}</td><td>${esc(String(c.change||""))}${c.before!=null?` <span class="note">(was ${esc(JSON.stringify(c.before))})</span>`:""}</td><td>${esc(c.rationale||"")}</td><td>${esc(c.source||"coach")}</td><td><span class="verdict ${c.status}">${c.status}${c.reverted_by?" by "+c.reverted_by:""}</span></td></tr>`).join("")||"<tr><td colspan=8 class='note'>No changes yet</td></tr>"}
     if(name==="prompts"){const ps=await api("/api/prompts");$("promptlist").innerHTML=ps.map(p=>`<tr style="cursor:pointer" onclick="loadPrompt('${p.agent}')"><td>${esc(p.agent)}</td><td class="num">${p.words}</td><td class="num">${p.lessons}</td></tr>`).join("")}
     if(name==="runs"){const rs=await api("/api/runs");$("runs").innerHTML=rs.slice().reverse().map(r=>{const tr=r.track_record||[];const g=k=>tr.length?pct((tr.reduce((a,x)=>a*(1+(x[k]||0)),1)-1)*100):"–";return`<tr><td>${esc(r.id)}${S.state?.campaign?.id===r.id?" (open)":""}</td><td>${esc(r.meta.model||"")}</td><td>${r.seasons_done.length} of ${r.meta.seasons||"?"}</td><td>${esc((r.meta.personas||[]).join(", "))}</td><td>${esc(r.meta.apply_mode||"")}</td><td class="num">${g("team")}</td><td class="num">${g("spy")}</td><td><button onclick="openRun('${r.id}')">Open</button> <button onclick="replayRun('${r.id}')">Replay</button></td></tr>`}).join("")||"<tr><td colspan=8 class='note'>No campaigns yet</td></tr>"}
     if(name==="processes")renderProcesses();
@@ -590,9 +673,7 @@ async function loadPrompt(agent){const p=await api("/api/prompts/"+agent);$("pro
 $("prompt-save").onclick=async()=>{const a=$("prompt-text").dataset.agent;try{await api("/api/prompts/"+a,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:$("prompt-text").value})});toast("Saved "+a+".md and logged a manual change");loadTab("prompts")}catch(e){toast(e.message)}};
 async function decidePending(i,d){try{await post(`/api/pending/${i}/${d}`);toast(d==="accept"?"Applied":"Rejected");loadTab("reviews");refreshState()}catch(e){toast(e.message)}}
 async function openRun(id){try{await post(`/api/runs/${id}/open`);S.events=[];S.seen=new Set();S.campaign=null;rows.innerHTML="";connectLive();await refreshState();await refreshStatus();toast("Opened "+id)}catch(e){toast(e.message)}}
-function replayRun(id){if(S.es)S.es.close();if(S.replayEs)S.replayEs.close();S.events=[];S.seen=new Set();S.campaign=null;rows.innerHTML="";S.replaying=true;$("feedtitle").textContent="Replay of "+id;$("livebtn").style.display="";
-  const es=new EventSource(`/api/runs/${id}/replay?speed=${$("replayspeed").value}`);S.replayEs=es;es.onmessage=e=>handleEvent(JSON.parse(e.data));es.addEventListener("end",()=>{es.close();toast("Replay finished")});es.onerror=()=>es.close();showTab("progress");openRun(id).then(()=>{});}
-$("livebtn").onclick=()=>{if(S.replayEs)S.replayEs.close();S.events=[];S.seen=new Set();S.campaign=null;rows.innerHTML="";connectLive()};
+$("livebtn").onclick=()=>{clearTimeout(RP.timer);RP.playing=false;$("scrub").classList.remove("on");S.events=[];S.seen=new Set();S.campaign=null;rows.innerHTML="";for(const k in R)delete R[k];renderRoster();connectLive()};
 function renderProcesses(){const s=S.status,st=S.state;const c=st?.campaign;const sc=st?.progress?.scorecard;
   $("procgrid").innerHTML=[
     [`Ollama server`,s?(s.ollama.ok?"Reachable":"Offline"):"Unknown",[["Model",s?.model||""],["Status",s?.ollama.message||""],["Calls this season",s?.budget?`${s.budget.calls} of ${s.budget.max_calls}`:"–"]]],
@@ -602,6 +683,96 @@ function renderProcesses(){const s=S.status,st=S.state;const c=st?.campaign;cons
     [`Event bus and trace`,`${S.events.length} events loaded in this page`,[["File",c?`runs/${c.id}/trace.jsonl`:"–"],["Streaming","Server-Sent Events to this browser"],["Replayable","yes, from the Runs tab"]]],
     [`Data cache`,s?.data?`Fetched ${s.data.created?.slice(0,16)||""}`:"No manifest",[["Source","yfinance, daily adjusted closes, no key"],["Rows",s?.data?`${s.data.rows} days, ${s.data.start} to ${s.data.end}`:"–"],["Hash",s?.data?.sha256||"–"]]],
   ].map(([t,stt,dl])=>`<div><h2><i class="dot ${s&&s.ollama.ok?"ok":""}"></i>${t}</h2><div class="st">${esc(stt)}</div><dl>${dl.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl></div>`).join("");}
+
+// ---------- holdings ----------
+function renderHoldings(t){const box=$("holdings");if(!box)return;const h=t.holdings||{};const desk=(S.liveDesk&&S.status?.running)?S.liveDesk:h.desk;
+  const col=(title,w,cls)=>{const rows=Object.entries(w||{}).filter(([,v])=>v>0.0005).sort((a,b)=>b[1]-a[1]).slice(0,12);const max=Math.max(0.0001,...rows.map(r=>r[1]));
+    return `<div><h3>${title}</h3>${rows.length?rows.map(([tk,v])=>`<div class="hrow ${cls}"><span>${esc(tk)}</span><i style="width:${(v/max*100).toFixed(0)}%"></i><b>${(v*100).toFixed(0)}%</b></div>`).join(""):`<div class="none">${cls==="desk"?"nothing held yet":"shown when the season closes"}</div>`}</div>`};
+  box.innerHTML=col("Quant book holds",h.book,"book")+col("Desk holds",desk,"desk")}
+
+// ---------- team roster ----------
+const ROSTER_BASE=[["data","Data Agent","D","#d9f3e8"],["idea","Idea Agent","I","#e9e4fb"],["coder","Coder Agent","C","#fde8dc"],["critic","Critic Agent","K","#fff1c8"]];
+const ROSTER_TAIL=[["review","Coach (Review Agent)","R","#fbe0ea"],["core","Core (plain code)","py","#e4e7e2"]];
+const CORE=new Set(["engine","sandbox","selector","scorer","orchestrator"]);
+const R={};
+function rosterAgents(){const personas=(S.state?.campaign?.personas)||["momentum"];return [...ROSTER_BASE,...personas.map(p=>[`trader_${p}`,`Trader, ${p.replace("_"," ")}`,"T","#dcecfb"]),...ROSTER_TAIL]}
+function callsText(r){return `${r.calls||0} model calls${r.ms?`, last ${(r.ms/1000).toFixed(1)} s`:""}`}
+function renderRoster(){const box=$("roster");const list=rosterAgents();box.style.gridTemplateColumns=`repeat(${list.length},1fr)`;
+  box.innerHTML=list.map(([id,name,mark,color])=>{const r=R[id]||{};return `<div class="ag ${r.thinking?"thinking":""}" id="ag-${id}"><i class="mark" style="background:${color}">${mark}</i><b>${esc(name)}</b><span class="st">${esc(r.thinking?"thinking…":(r.last||"idle"))}</span><span class="calls">${id==="core"?esc(r.last2||"sandbox, engine, selector, scorer"):callsText(r)}</span><div class="live">${esc(r.live||"")}</div></div>`}).join("")}
+function rosterUpdate(ev){const a=ev.agent;const id=CORE.has(a)?"core":a;if(!id)return;const r=R[id]=R[id]||{calls:0};
+  if(ev.kind==="llm_start"){r.thinking=true;r.live=""}
+  else if(ev.kind==="llm_call"){r.thinking=false;r.calls++;r.ms=ev.payload.ms;r.live=""}
+  else if(ev.kind==="llm_token"){r.live=String(ev.payload.text||"").slice(-220)}
+  else if(ev.kind==="tool_call"){r.last=`tool ${ev.payload.tool}`}
+  else if(ev.payload.text&&ev.kind!=="phase"){if(id==="core"){r.last=AGENTS[a]?AGENTS[a][0]:a;r.last2=`${ev.kind.replace(/_/g," ")}`;r.live=String(ev.payload.text).slice(0,140)}else r.last=String(ev.payload.text).slice(0,64)}
+  const e=$("ag-"+id);if(!e){renderRoster();return}
+  e.classList.toggle("thinking",!!r.thinking);e.querySelector(".st").textContent=r.thinking?"thinking…":(r.last||"idle");
+  e.querySelector(".calls").textContent=id==="core"?(r.last2||"sandbox, engine, selector, scorer"):callsText(r);e.querySelector(".live").textContent=r.live||"";if(id==="core")e.classList.remove("thinking");}
+
+// ---------- desk chart: decisions on the price ----------
+async function loadDesk(){const first=(S.state?.campaign?.universe?.tickers||[])[0]||"";let data;try{data=await api(`/api/prices?ticker=${S.deskTicker||first}`)}catch(e){$("desk-tickers").innerHTML=`<span class="note">${esc(e.message)}</span>`;return}
+  S.deskTicker=data.ticker;const box=$("desk-tickers");box.innerHTML="";(data.tickers||[]).forEach(t=>{const b=document.createElement("button");b.className="chip"+(t===data.ticker?" on":"");b.textContent=t;b.onclick=()=>{S.deskTicker=t;loadDesk()};box.appendChild(b)});
+  drawDesk(data);}
+function drawDesk(data){const svg=$("deskchart"),tip=$("desktip");svg.innerHTML="";const W=svg.clientWidth,H=svg.clientHeight;const ser=(data.series||[]).filter(d=>d.close!=null);if(!W||ser.length<2){svg.appendChild(el("text",{x:W/2,y:H/2,"text-anchor":"middle"},"No cached prices for this ticker yet"));return}
+  const n=ser.length,m={l:52,r:90,t:14,b:28};const xs=i=>m.l+(W-m.l-m.r)*i/(n-1);const idx=new Map(ser.map((d,i)=>[d.date,i]));
+  const vals=ser.flatMap(d=>[d.close,d.sma50,d.sma200]).filter(v=>v!=null);const lo=Math.min(...vals)*0.96,hi=Math.max(...vals)*1.04;const ys=v=>m.t+(H-m.t-m.b)*(1-(v-lo)/(hi-lo));
+  (data.seasons||[]).forEach((s,k)=>{const a=ser.findIndex(d=>d.date>=s.start),b=ser.findIndex(d=>d.date>s.end);const i0=a<0?n-1:a,i1=b<0?n-1:Math.max(a,b-1);if(k%2===0)svg.appendChild(el("rect",{x:xs(i0),y:m.t,width:Math.max(1,xs(i1)-xs(i0)),height:H-m.t-m.b,fill:"var(--accent-soft)",opacity:.6}));svg.appendChild(el("text",{x:(xs(i0)+xs(i1))/2,y:H-10,"text-anchor":"middle"},`S${s.n} ${s.label}`))});
+  const step=Math.max(1,Math.round((hi-lo)/5/5)*5);for(let g=Math.ceil(lo/step)*step;g<hi;g+=step){svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:ys(g),y2:ys(g),class:"grid"}));svg.appendChild(el("text",{x:m.l-8,y:ys(g)+4,"text-anchor":"end"},g))}
+  const line=(key,color,wd)=>{let d="",pen=false;ser.forEach((r,i)=>{const v=r[key];if(v==null){pen=false;return}d+=(pen?"L":"M")+xs(i).toFixed(1)+","+ys(v).toFixed(1);pen=true});svg.appendChild(el("path",{d,fill:"none",stroke:color,"stroke-width":wd,"stroke-linejoin":"round"}))};
+  line("sma200",css("--ink-3"),1.2);line("sma50",css("--quant"),1.4);line("close",css("--ink"),1.5);
+  const byDate={};(data.decisions||[]).forEach(d=>{(byDate[d.date]=byDate[d.date]||[]).push(d)});
+  Object.entries(byDate).forEach(([date,ds])=>{const i=idx.get(date);if(i==null)return;const x=xs(i),y=ys(ser[i].close);ds.forEach((d,k)=>{const yy=y+(k?k*10:0);
+    if(d.action==="BUY")svg.appendChild(el("path",{d:`M${x},${yy+8} L${x-6},${yy+18} L${x+6},${yy+18} Z`,fill:"var(--good)"}));
+    else if(d.action==="SELL")svg.appendChild(el("path",{d:`M${x},${yy-8} L${x-6},${yy-18} L${x+6},${yy-18} Z`,fill:"var(--crit)"}));
+    else svg.appendChild(el("circle",{cx:x,cy:yy,r:3.5,fill:"var(--ink-3)",stroke:"#fff","stroke-width":1}))})});
+  const last=ser[n-1];svg.appendChild(el("text",{x:W-m.r+8,y:ys(last.close)+4,class:"lbl"},last.close.toFixed(0)));
+  const cross=el("line",{y1:m.t,y2:H-m.b,stroke:"#1b2430","stroke-width":1,opacity:0});svg.appendChild(cross);
+  svg.onmousemove=e=>{const r=svg.getBoundingClientRect();let i=Math.round((e.clientX-r.left-m.l)/(W-m.l-m.r)*(n-1));i=Math.max(0,Math.min(n-1,i));
+    let j=i,best=1e9;for(const date of Object.keys(byDate)){const k=idx.get(date);if(k!=null&&Math.abs(k-i)<best&&Math.abs(k-i)<=3){best=Math.abs(k-i);j=k}}
+    const x=xs(j);cross.setAttribute("x1",x);cross.setAttribute("x2",x);cross.setAttribute("opacity",1);const d=ser[j];const ds=byDate[d.date]||[];
+    tip.innerHTML=`<b>${d.date}</b> close ${fnum(d.close)}`+(ds.length?"<br>"+ds.map(q=>`<b>${esc(q.persona)}: ${q.action}</b> ${fnum(q.from_weight)} to ${fnum(q.target_weight)}, confidence ${fnum(q.confidence)}<br>${esc(q.reason)}<br>1-month outcome ${q.outcome_1m==null?"pending":pct(q.outcome_1m*100)}`).join("<br>"):"<br>no decision on this day");
+    tip.style.display="block";tip.style.whiteSpace="normal";tip.style.maxWidth="420px";const tw=tip.offsetWidth;tip.style.left=(x+14+tw>W?x-tw-14:x+14)+"px";tip.style.top=(e.clientY-r.top+24)+"px"};
+  svg.onmouseleave=()=>{tip.style.display="none";cross.setAttribute("opacity",0)};}
+
+// ---------- coach timeline ----------
+function drawTimeline(cl){const svg=$("timeline"),tip=$("timelinetip");svg.innerHTML="";const W=svg.clientWidth;if(!W)return;
+  const changes=(cl||[]).filter(c=>c.lever!=="manual_edit");if(!changes.length){svg.setAttribute("height",60);svg.appendChild(el("text",{x:W/2,y:35,"text-anchor":"middle"},"No coach changes yet"));return}
+  const laneOf=c=>c.lever==="set_param"?c.target:c.lever==="set_family_focus"?"idea: family focus":c.lever==="revert"?"reverts":(c.lever==="retire_strategy"||c.lever==="reinstate_strategy")?"strategies":`${c.target}: lessons`;
+  const lanes=[...new Set(changes.map(laneOf))];const seasons=[...new Set(changes.map(c=>c.season))].sort((a,b)=>a-b);const nS=Math.max(...seasons)+1;
+  const m={l:190,r:30,t:26,b:8},rowH=34;const H=m.t+m.b+lanes.length*rowH;svg.setAttribute("height",H);svg.style.height=H+"px";
+  const xs=s=>m.l+(W-m.l-m.r)*(s-0.5)/nS;
+  for(let s=1;s<=nS;s++){svg.appendChild(el("line",{x1:xs(s)-(W-m.l-m.r)/nS/2,x2:xs(s)-(W-m.l-m.r)/nS/2,y1:m.t-6,y2:H-m.b,class:"grid"}));svg.appendChild(el("text",{x:xs(s),y:14,"text-anchor":"middle"},`after S${s}`))}
+  lanes.forEach((ln,i)=>{const y=m.t+i*rowH+rowH/2;svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:y,y2:y,class:"grid"}));svg.appendChild(el("text",{x:m.l-10,y:y+4,"text-anchor":"end",class:"lbl"},ln.length>26?ln.slice(0,25)+"…":ln))});
+  changes.forEach(c=>{const y=m.t+lanes.indexOf(laneOf(c))*rowH+rowH/2;const x=xs(c.season);const active=c.status!=="reverted";const fill=active?"var(--team)":"#fbfbfa";const stroke="var(--team)";const g=el("g",{style:"cursor:default"});
+    if(c.lever==="set_param"){g.appendChild(el("rect",{x:x-20,y:y-10,width:40,height:20,rx:4,fill,stroke,"stroke-width":1.4}));g.appendChild(el("text",{x,y:y+4,"text-anchor":"middle",style:`fill:${active?"#fff":"var(--team)"};font-weight:600;font-size:10.5px`},String(c.after??c.change).slice(0,7)))}
+    else if(c.lever==="add_lesson"||c.lever==="remove_lesson"){g.appendChild(el("path",{d:`M${x-16},${y-11} h32 a4,4 0 0 1 4,4 v10 a4,4 0 0 1 -4,4 h-20 l-6,6 v-6 h-6 a4,4 0 0 1 -4,-4 v-10 a4,4 0 0 1 4,-4 z`,fill,stroke,"stroke-width":1.4}));g.appendChild(el("text",{x,y:y+4,"text-anchor":"middle",style:`fill:${active?"#fff":"var(--team)"};font-weight:600;font-size:10.5px`},(c.lever==="add_lesson"?"+":"−")+"lesson"))}
+    else if(c.lever==="set_family_focus"){g.appendChild(el("path",{d:`M${x},${y-12} L${x+12},${y} L${x},${y+12} L${x-12},${y} Z`,fill,stroke,"stroke-width":1.4}))}
+    else if(c.lever==="revert"){g.appendChild(el("circle",{cx:x,cy:y,r:10,fill:"#fbfbfa",stroke:"var(--serious)","stroke-width":1.6}));g.appendChild(el("text",{x,y:y+4,"text-anchor":"middle",style:"fill:var(--serious);font-weight:600;font-size:10px"},"↺"+c.target))}
+    else{g.appendChild(el("circle",{cx:x,cy:y,r:8,fill,stroke,"stroke-width":1.4}))}
+    svg.appendChild(el("text",{x:x+(c.lever==="set_param"?24:c.lever==="set_family_focus"?15:22),y:y-6,style:"font-size:9.5px;fill:var(--ink-3)"},"#"+c.id));
+    g.onmousemove=e=>{const r=svg.getBoundingClientRect();tip.innerHTML=`<b>Change ${c.id}, after season ${c.season}: ${esc(c.lever)} ${esc(c.target||"")}</b><br>${esc(String(c.change||"")).slice(0,160)}${c.before!=null?`<br>was ${esc(JSON.stringify(c.before))}`:""}<br><span style="opacity:.8">${esc(c.rationale||"")}</span><br>${c.status}${c.reverted_by?" by change "+c.reverted_by:""}`;tip.style.display="block";tip.style.whiteSpace="normal";tip.style.maxWidth="440px";const tw=tip.offsetWidth;tip.style.left=(e.clientX-r.left+14+tw>W?e.clientX-r.left-tw-14:e.clientX-r.left+14)+"px";tip.style.top=(e.clientY-r.top+18)+"px"};
+    g.onmouseleave=()=>{tip.style.display="none"};svg.appendChild(g)});}
+
+// ---------- replay with a scrubber ----------
+const RP={events:[],i:0,timer:null,playing:false,speed:5,id:null};
+function replayRun(id){if(S.es)S.es.close();if(S.replayEs)S.replayEs.close();clearTimeout(RP.timer);S.events=[];S.seen=new Set();S.campaign=null;rows.innerHTML="";S.replaying=true;S.live=false;$("feedtitle").textContent="Replay of "+id;$("livebtn").style.display="";
+  for(const k in R)delete R[k];renderRoster();
+  api(`/api/runs/${id}/trace`).then(tr=>{RP.events=tr;RP.i=0;RP.id=id;RP.speed=+$("replayspeed").value;$("scrub").classList.add("on");$("scrub-range").max=tr.length;$("scrub-range").value=0;$("scrub-label").textContent=`Replay ${id}`;
+    openRun(id).catch(()=>{}).finally(()=>{RP.playing=true;$("scrub-play").textContent="Pause";tick()})}).catch(e=>toast(e.message));
+  showTab("progress");}
+function tick(){if(!RP.playing)return;if(RP.i>=RP.events.length){RP.playing=false;$("scrub-play").textContent="Replay again";toast("Replay finished");return}
+  const ev=RP.events[RP.i++];handleEvent(ev);$("scrub-range").value=RP.i;$("scrub-pos").textContent=`${RP.i} / ${RP.events.length}${ev.season?`, season ${ev.season}`:""}`;
+  if(ev.kind==="season_scored")showBoard(ev.payload,ev.season);
+  const delay=RP.speed<=0?0:(ev.kind==="decision"||ev.kind==="code"?900:450)/RP.speed;RP.timer=setTimeout(tick,delay)}
+function seekTo(n){clearTimeout(RP.timer);S.events=[];S.seen=new Set();rows.innerHTML="";for(const k in R)delete R[k];renderRoster();RP.i=0;const target=Math.max(0,Math.min(RP.events.length,n));
+  while(RP.i<target){const ev=RP.events[RP.i++];const key=`${ev.campaign}:${ev.seq}`;S.seen.add(key);S.events.push(ev);rosterUpdate(ev)}
+  renderFeed();$("scrub-range").value=RP.i;$("scrub-pos").textContent=`${RP.i} / ${RP.events.length}`;if(RP.playing)RP.timer=setTimeout(tick,200)}
+$("scrub-range").addEventListener("input",e=>seekTo(+e.target.value));
+$("scrub-play").onclick=()=>{if(RP.i>=RP.events.length){RP.i=0;seekTo(0)}RP.playing=!RP.playing;$("scrub-play").textContent=RP.playing?"Pause":"Play";if(RP.playing)tick()};
+$("replayspeed").addEventListener("change",e=>{RP.speed=+e.target.value});
+
+// ---------- presenter mode ----------
+$("presentbtn").onclick=()=>{const on=document.body.classList.toggle("present");$("presentbtn").classList.toggle("on",on);$("presentbtn").textContent=on?"Exit present":"Present";if(S.state)renderState()};
 
 // ---------- tabs, controls ----------
 function showTab(id){document.querySelectorAll(".tabbar button").forEach(x=>x.classList.toggle("on",x.dataset.tab===id));document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("on",p.id==="tab-"+id));history.replaceState(null,"","#"+id);if(id==="progress"&&S.state)renderState();else loadTab(id)}
@@ -641,7 +812,7 @@ $("walk-next").onclick=()=>S.step>=steps.length-1?closeWalk():go(S.step+1);$("wa
 addEventListener("keydown",e=>{if(!S.walk)return;if(e.key==="ArrowRight")$("walk-next").click();if(e.key==="ArrowLeft")$("walk-back").click();if(e.key==="Escape")closeWalk()});
 
 // ---------- start ----------
-(async function init(){await refreshStatus();await refreshState();connectLive();setInterval(refreshStatus,3000);setInterval(()=>{if(S.status?.running)refreshState()},6000);
+(async function init(){renderRoster();await refreshStatus();await refreshState();connectLive();setInterval(refreshStatus,3000);setInterval(()=>{if(S.status?.running)refreshState()},6000);
   const h=location.hash.slice(1);if(h==="walk")openWalk();else if(h&&document.querySelector(`.tabbar button[data-tab="${h}"]`))showTab(h);})();
 </script>
 </body>
