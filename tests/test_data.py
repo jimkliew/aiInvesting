@@ -46,3 +46,21 @@ def test_manifest_hash_stable(prices, tmp_path):
     m2 = write_manifest(prices, tmp_path / "m2.json")
     assert m1["sha256"] == m2["sha256"] == prices_hash(prices)
     assert m1["rows"] == len(prices) and m1["tickers"] == list(prices.columns)
+
+
+def test_cache_refetches_when_start_not_covered(tmp_path, monkeypatch):
+    import pandas as pd
+    from aitrader.data import fetch
+    calls = []
+
+    def fake_download(ticker, start, end, retries=3):
+        calls.append((ticker, start))
+        idx = pd.bdate_range(start, end or "2024-03-01")
+        return pd.Series(100.0, index=idx, name=ticker)
+
+    monkeypatch.setattr(fetch, "_download", fake_download)
+    fetch.fetch_prices(["AAA"], start="2023-06-01", end="2024-03-01", cache_dir=tmp_path)
+    fetch.fetch_prices(["AAA"], start="2023-06-01", end="2024-03-01", cache_dir=tmp_path)   # served from cache
+    assert len(calls) == 1
+    fetch.fetch_prices(["AAA"], start="2015-01-01", end="2024-03-01", cache_dir=tmp_path)   # earlier start: refetch
+    assert len(calls) == 2 and calls[-1][1] == "2015-01-01"

@@ -106,14 +106,16 @@ def run_data_agent(llm, universe: Universe, bus=None, data_dir: str | Path = "da
         brief = brief or (f"Universe: {', '.join(universe.tickers)}. Benchmark: {universe.benchmark}. "
                           f"Daily data from {universe.start} to today. Candidate replacements: {', '.join(CANDIDATES)}.")
         try:
-            final = llm.chat_with_tools(prompts.load("data"), brief, tools, max_steps=8, agent="data")
+            final = llm.chat_with_tools(prompts.load("data"), brief, tools, max_steps=12, agent="data")
             used_llm = True
             if state["report"] is None and final:
                 state["report"] = final.strip()
         except AgentError as e:
-            emit("agent_error", agent="data", error=str(e), text=f"Data Agent failed ({e}); using the deterministic path")
+            emit("agent_error", agent="data", error=str(e), text=f"Data Agent failed ({e}); using the deterministic path with the brief's tickers")
+            state["prices"], state["tickers"], state["report"] = None, list(universe.tickers), None
         except Exception as e:  # Ollama down, etc.
             emit("agent_error", agent="data", error=str(e), text=f"Data Agent unavailable ({type(e).__name__}); using the deterministic path")
+            state["prices"], state["tickers"], state["report"] = None, list(universe.tickers), None
     if state["prices"] is None:
         prices, rep = _deterministic(Universe(tickers=state["tickers"], benchmark=universe.benchmark, start=universe.start),
                                      data_dir, on_ticker)

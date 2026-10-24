@@ -55,7 +55,9 @@ def fetch_prices(
         if p.exists() and not refresh:
             cached = pd.read_parquet(p)["close"]
             cached.index = pd.to_datetime(cached.index)
-            if len(cached) and (target_end - cached.index.max()).days <= 4:
+            fresh_end = len(cached) and (target_end - cached.index.max()).days <= 4
+            covers_start = len(cached) and cached.index.min() <= pd.Timestamp(start) + pd.Timedelta(days=7)
+            if fresh_end and covers_start:
                 s = cached
         if s is None:
             s = _download(t, start, end)
