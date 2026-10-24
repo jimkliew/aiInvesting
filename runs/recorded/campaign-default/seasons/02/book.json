@@ -1,7 +1,7 @@
 {
   "season": 2,
-  "name": "sma_cross_50_200",
+  "name": "equal_weight",
   "code": "",
-  "val_sharpe": 0.5964,
+  "val_sharpe": 0.6819,
   "fallback": false
 }

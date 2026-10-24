@@ -2,6 +2,6 @@
   "season": 5,
   "name": "equal_weight",
   "code": "",
-  "val_sharpe": 1.0118,
+  "val_sharpe": 0.9688,
   "fallback": false
 }

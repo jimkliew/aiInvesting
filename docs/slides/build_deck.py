@@ -339,10 +339,10 @@ def build_section(prs, n0):
     s = base(prs, n, "A strategy the Coder wrote, shown on one ticker", "Price, indicators, entries, exits and position size, straight from the dashboard's Strategy tab",
              footer="Strategy tab of the live page. The chart is drawn from the book's actual weights and the cached prices."); n += 1
     picture(s, sh("strategy_chart.png"), 0.55, 1.10, 8.40, 4.30, valign="top")
-    light_banner(s, 0.55, 5.60, 8.40, 1.30, "Entry: close above yesterday's 20-day high.  Exit: close below the 20-day average.  Size: inverse volatility, no name above 30%.  Cost: 5 bp per unit of weight traded.  Fill: next open, never the same close.", size=11.5)
-    cards = [("Read the chart", "Black is the close. Blue is the 20-day average, the exit line. Grey steps are yesterday's 20-day high, the entry line. Green triangles mark entries, red mark exits. Shaded bands are days the strategy held the name."),
-             ("Below the price", "The weight the code assigned, capped at 30% and scaled by inverse volatility. Then the sleeve's growth against holding the stock at a constant 30%."),
-             ("Why it matters in class", "Students can see every rule in the code acting on prices, then open the trade list to check each entry and exit against the numbers that triggered it.")]
+    light_banner(s, 0.55, 5.60, 8.40, 1.30, "What the tab shows: the season's quant book on one ticker. In this run the equal-weight baseline won validation every season, so the book held each of the 12 names at 8%, rebalanced weekly. Cost: 5 bp per unit of weight traded. Fill: next open, never the same close.", size=11.5)
+    cards = [("Read the chart", "Black is the close; blue and orange are the 20 and 50-day averages; grey steps are the previous 20-day high. Green triangles mark where the book entered, red where it exited. Shaded bands are days it held the name."),
+             ("Below the price", "The weight the book assigned to this name, then the sleeve's growth against simply holding the stock at the book's maximum weight."),
+             ("Why it matters in class", "Whatever the code says, students can check it against prices day by day, switch tickers, and open the trade list to see each entry and exit.")]
     for i, (t, bdy) in enumerate(cards):
         label_card(s, 9.15, 1.10 + i*1.98, 3.63, 1.84, t.upper(), bdy, body_size=10.5)
 

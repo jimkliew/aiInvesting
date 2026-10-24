@@ -47,10 +47,13 @@ class ReviewPacket:
     notebook_summary: str
     best_worst: list[dict] = field(default_factory=list)
     lessons: dict[str, list[dict]] = field(default_factory=dict)
+    personas: list[str] = field(default_factory=lambda: ["momentum"])
 
     def as_text(self) -> str:
         sc = self.scorecard
         lines = [f"SEASON {self.season_label} SCORECARD" + (" (partial quarter)" if sc.get("partial") else "")]
+        lines.append("Active desk personas this campaign: " + ", ".join(f"trader_{p}" for p in self.personas) +
+                     ". Lessons for other personas have no effect.")
         for key in ("team", "book", "desk", "spy"):
             m = sc.get(key)
             if m:

@@ -442,7 +442,8 @@ class Orchestrator:
         self.controls.checkpoint()
         self.agent("review")
         packet = ReviewPacket(season.label, sc, self.store.track_record(), self.store.changelog(),
-                              self.store.notebook_summary(), best_worst(self.store.decisions(season.n)), self.store.all_lessons())
+                              self.store.notebook_summary(), best_worst(self.store.decisions(season.n)), self.store.all_lessons(),
+                              personas=list(self.personas))
         rv = coach(self.llm, packet)
         self.store.save_review(season.n, {**rv.model_dump(), "packet": packet.as_text()})
         state["review"] = rv

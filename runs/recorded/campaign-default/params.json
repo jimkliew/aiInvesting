@@ -1,5 +1,5 @@
 {
-  "desk.max_weight": 0.3,
+  "desk.max_weight": 0.1,
   "critic.min_val_sharpe": 0.5,
   "research.rounds": 1,
   "research.ideas_per_round": 4,
