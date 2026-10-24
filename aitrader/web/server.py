@@ -234,6 +234,11 @@ def create_app(runs_dir: str = "runs", data_dir: str = "data", model: str = "qwe
     def index():
         return FileResponse(STATIC / "index.html")
 
+    @app.get("/favicon.ico")
+    def favicon():
+        from fastapi.responses import Response
+        return Response(status_code=204)
+
     @app.get("/api/status")
     def status():
         ok, msg = False, "not checked"
