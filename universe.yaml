@@ -1,0 +1,7 @@
+# The universe is frozen for a campaign so seasons stay comparable.
+tickers: [AAPL, MSFT, NVDA, AMZN, GOOGL, META, TSLA, AVGO, AMD, CRM, ORCL, NFLX]
+benchmark: SPY          # measured against, never held
+start: "2015-01-01"     # first day of training data
+cost_bps: 5             # per unit of |weight change|
+campaign_start: "2025-01-01"
+seasons: 6              # calendar quarters

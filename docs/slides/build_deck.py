@@ -9,9 +9,14 @@ from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE, MSO_CONNECTOR
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+import json
+from pathlib import Path
+
 from PIL import Image
 
 TEMPLATE, OUT_V12, OUT_SOLO, SHOTS = sys.argv[1:5]
+RUN_DIR = sys.argv[5] if len(sys.argv) > 5 else None
+pct = lambda v: ("+" if v > 0 else "\u2212" if v < 0 else "") + f"{abs(v):.1f}%"
 REPO = "github.com/jimkliew/aiInvesting"
 
 NAVY=RGBColor(0x0B,0x1F,0x33); GREY=RGBColor(0x66,0x70,0x85); BODY=RGBColor(0x24,0x34,0x47)
@@ -175,8 +180,8 @@ def build_section(prs, n0):
     tb(s, 0.55, 2.62, 12.23, 0.25, "WHAT WE RELY ON", size=10.5, bold=True, color=BLUE2, fit=False)
     rel = [("Data: yfinance, daily bars", "Free, no key. Daily open, high, low, close and volume from 2015. Adjusted for splits and dividends. The Data Agent checks gaps and short histories and writes a report."),
            ("Model: Ollama with qwen3:8b", "Open weights under Apache 2.0, runs fully offline. Supports tool calling and JSON-schema output. Swap any Ollama model with one flag; qwen3:4b fits 8 GB laptops."),
-           ("Compute: your own machine", "About 2 to 5 seconds per decision on Apple Silicon. A six-season campaign is roughly 220 model calls, about 20 minutes. Replay mode shows a recorded run in class."),
-           ("Market model: deliberately simple", "US large caps, daily closes, long only, weekly rebalance, 5 basis points per unit of weight traded. No shorting, leverage, options or intraday data in v1.")]
+           ("Compute: your own machine", "About 2 to 5 seconds per model call on Apple Silicon. A six-season campaign is roughly 300 calls, 20 to 30 minutes. Replay mode shows a recorded run in class."),
+           ("Market model: deliberately simple", "US large caps, daily closes, long only, monthly desk rebalance (weekly is a coach lever), 5 basis points per unit of weight traded. No shorting, leverage, options or intraday data.")]
     for i, (t, bdy) in enumerate(rel):
         x = 0.55 + (i % 2) * 6.23; y = 2.95 + (i // 2) * 2.05
         card(s, x, y, 6.00, 1.90, i+1, t, bdy, num_fill=GREEN, body_size=12)
@@ -198,12 +203,17 @@ def build_section(prs, n0):
         card(s, x, y, 2.95, 1.95, i+1 if i < 7 else "py", t, bdy, num_fill=fill, title_size=12.5, body_size=12)
     light_banner(s, 0.55, 6.25, 12.23, 0.62, "Only the Data Agent uses tool calling. The other six get everything they need in the prompt, which is cheaper and more reliable for an 8B model.", size=11.5)
 
+    # D2. the map, full width
+    s = base(prs, n, "How it all fits together", "Agents do the judgment; plain Python does the schedule, the arithmetic and the bookkeeping",
+             footer="docs/architecture.png in the repo, drawn by docs/draw_architecture.py. docs/ARCHITECTURE.md adds the agent table, the on-disk layout and where to change things."); n += 1
+    picture(s, sh("architecture_parts.png"), 0.55, 1.05, 12.23, 6.05, valign="top")
+
     # E. how a season runs
     s = base(prs, n, "How a season runs", "One calendar quarter the team has never seen, traded once",
              "Research on the past, trade the sealed quarter, score it, get coached, repeat."); n += 1
     steps = [("Research", "Idea, Coder and Critic loop over hypotheses using only data from before the quarter."),
              ("Select", "Code, not a model, picks the best validation Sharpe under a turnover cap. That is the quant book."),
-             ("Trade", "The quant book trades mechanically. The desk persona makes weekly discretionary calls."),
+             ("Trade", "The quant book trades mechanically. The desk persona makes a discretionary call per stock at each rebalance."),
              ("Score", "Quant book, desk, team (half each), SPY and baselines. The track record grows by one quarter."),
              ("Review", "The coach reads the season packet and writes an assessment with 1 to 3 recommendations."),
              ("Apply", "Levers are applied automatically, or wait for you to click Accept. The next season begins.")]
@@ -215,7 +225,7 @@ def build_section(prs, n0):
         tb(s, x+0.60, 2.13, w-0.70, 0.36, t, size=14, bold=True, color=NAVY, anchor=MSO_ANCHOR.MIDDLE)
         tb(s, x+0.14, 2.65, w-0.28, 1.75, bdy, size=11.5)
         if i < 5: connector(s, x+w, 3.2, x+w+gap, 3.2)
-    light_banner(s, 0.55, 4.75, 12.23, 0.62, "Default campaign: 6 seasons from 2025 Q1 to 2026 Q2, about 220 model calls, about 20 minutes on a laptop.", size=12.5)
+    light_banner(s, 0.55, 4.75, 12.23, 0.62, "Default campaign: 6 seasons from 2025 Q1 to 2026 Q2, about 300 model calls, 20 to 30 minutes on a laptop.", size=12.5)
     tb(s, 0.55, 5.60, 12.23, 0.9, ["Season 1 also runs the Data Agent and a second research round. Later seasons reuse the cached data and carry the notebook forward.",
                                    "Budgets, not patience, end every loop: calls per season, minutes per season, strategies per round."], size=11.5, space_after=3)
 
@@ -294,7 +304,7 @@ def build_section(prs, n0):
         "You are a skeptical risk reviewer. Compare train and validation\nSharpe: a gap above 0.5 suggests overfitting. Discard validation\nturnover above {max_turnover} percent per year. Flag any single-name\nweight above 30 percent. Say what evidence would change your mind.\nLessons from the coach: {lessons}",
         "review = llm.structured(\n    system=prompts.load(\"critic\", lessons=store.lessons(\"critic\")),\n    user=f\"Code:\\n{code}\\n\\nTrain: {m_train}\\nValidation: {m_val}\\n\\n\"\n         f\"Notebook:\\n{notebook.summary()}\",\n    schema=Review,              # verdict, concerns[], suggestion\n)\nnotebook.add(hyp, code, m_train, m_val, review)\n\n# a Review, as returned\n{\"verdict\": \"KEEP\",\n \"concerns\": [\"top position averages 28% of the book\"],\n \"suggestion\": \"test a 25% cap; turnover 140%/yr is inside the limit\"}")
 
-    agent_slide("Trader personas, and the optional PM", "Phase 2. One call per ticker per week, from a point-in-time snapshot",
+    agent_slide("Trader personas, and the optional PM", "Phase 2. One call per ticker at each rebalance, from a point-in-time snapshot",
         "The persona sees only what existed on the decision date, about 300 tokens, and answers in a fixed JSON shape.",
         "Make a discretionary BUY, SELL or HOLD call with a target weight, a confidence, and one sentence grounded in the snapshot.",
         "Snapshot: last 20 closes, price against the 20, 50 and 200-day averages, RSI 14, returns over 1, 3 and 12 months, realized volatility, current weight.",
@@ -332,12 +342,12 @@ def build_section(prs, n0):
 
     # N. strategy in pictures
     s = base(prs, n, "A strategy the Coder wrote, shown on one ticker", "Price, indicators, entries, exits and position size, straight from the dashboard's Strategy tab",
-             footer="Dashboard mockup with sample data. The chart is computed in the page from the same logic as the displayed code."); n += 1
+             footer="Strategy tab of the live page. The chart is drawn from the book's actual weights and the cached prices."); n += 1
     picture(s, sh("strategy_chart.png"), 0.55, 1.10, 8.40, 4.30, valign="top")
-    light_banner(s, 0.55, 5.60, 8.40, 1.30, "Entry: close above yesterday's 20-day high.  Exit: close below the 20-day average.  Size: inverse volatility, no name above 30%.  Cost: 5 bp per unit of weight traded.  Fill: next open, never the same close.", size=11.5)
-    cards = [("Read the chart", "Black is the close. Blue is the 20-day average, the exit line. Grey steps are yesterday's 20-day high, the entry line. Green triangles mark entries, red mark exits. Shaded bands are days the strategy held the name."),
-             ("Below the price", "The weight the code assigned, capped at 30% and scaled by inverse volatility. Then the sleeve's growth against holding the stock at a constant 30%."),
-             ("Why it matters in class", "Students can see every rule in the code acting on prices, then open the trade list to check each entry and exit against the numbers that triggered it.")]
+    light_banner(s, 0.55, 5.60, 8.40, 1.30, "What the tab shows: the season's quant book on one ticker. In this run the equal-weight baseline won validation every season, so the book held each of the 12 names at 8%, rebalanced weekly. Cost: 5 bp per unit of weight traded. Fill: next open, never the same close.", size=11.5)
+    cards = [("Read the chart", "Black is the close; blue and orange are the 20 and 50-day averages; grey steps are the previous 20-day high. Green triangles mark where the book entered, red where it exited. Shaded bands are days it held the name."),
+             ("Below the price", "The weight the book assigned to this name, then the sleeve's growth against simply holding the stock at the book's maximum weight."),
+             ("Why it matters in class", "Whatever the code says, students can check it against prices day by day, switch tickers, and open the trade list to see each entry and exit.")]
     for i, (t, bdy) in enumerate(cards):
         label_card(s, 9.15, 1.10 + i*1.98, 3.63, 1.84, t.upper(), bdy, body_size=10.5)
 
@@ -355,11 +365,11 @@ def build_section(prs, n0):
     for i, (t, bdy) in enumerate(rules):
         x = 0.55 + (i % 4) * 3.1; y = 1.92 + (i // 4) * 2.08
         card(s, x, y, 2.95, 1.90, i+1, t, bdy, title_size=12.5, body_size=12)
-    light_banner(s, 0.55, 6.15, 12.23, 0.72, "Budget math on a laptop: about 35 model calls and 3 minutes per season, so 6 seasons take about 20 minutes. The class demo with three personas is about 40 minutes, which is why Replay exists.", size=11.5)
+    light_banner(s, 0.55, 6.15, 12.23, 0.72, "Budget math on a laptop: about 50 model calls and 4 minutes per season, so 6 seasons take 20 to 30 minutes. Three personas triple the desk calls, which is why Replay exists.", size=11.5)
 
     # P. Mission Control
-    s = base(prs, n, "Mission Control: the dashboard students run in the browser", "One local page, no server to host, no login. Opens in walkthrough mode",
-             footer="Mockup with sample data, rendered from docs/mockups/mission-control.html in the repo."); n += 1
+    s = base(prs, n, "Mission Control: the dashboard students run in the browser", "One local page, no login. Press Walkthrough for the 17-step guided tour",
+             footer="Live page during a real campaign on Oct 23, 2026, qwen3:8b on a Mac Studio."); n += 1
     picture(s, sh("walk.png"), 0.55, 1.10, 8.40, 4.80)
     feats = [("Walkthrough", "17 steps. Each Next reveals the agent events for that stage, highlights the panel, and shows the Python running at that moment plus the background processes."),
              ("Live feed and Step mode", "Every agent turn, tool call, decision and reason, colour-coded by agent. Pause and step one turn at a time while you narrate."),
@@ -370,7 +380,7 @@ def build_section(prs, n0):
 
     # Q. Progress
     s = base(prs, n, "Is the team improving? The Progress tab", "Track record, excess return by season, and whether validation predicted the season",
-             footer="Sample data. Four seasons cannot separate skill from luck. The lab teaches the measurement and the honest question, not a result."); n += 1
+             footer="Real run, Oct 23, 2026. A handful of seasons cannot separate skill from luck. The lab teaches the measurement and the honest question, not a result."); n += 1
     picture(s, sh("progress.png"), 0.55, 1.10, 8.40, 4.75)
     feats = [("Track record", "Growth of 1.00 across seasons the team had not seen, for team, quant book, desk and SPY. Numbered flags mark where each coach change took effect."),
              ("Did validation predict the season?", "Hollow dot: Sharpe on the validation year. Filled dot: Sharpe on the quarter it then traded. The gap is the overfitting lesson."),
@@ -401,10 +411,47 @@ def build_section(prs, n0):
         tb(s, x+0.52, y+0.10, 3.20, 0.36, t, size=12, bold=True, color=NAVY, anchor=MSO_ANCHOR.MIDDLE)
         tb(s, x+0.16, y+0.50, 3.55, 0.58, bdy, size=10.5)
 
+    # R2. the first real run, if a run folder was given
+    if RUN_DIR and (Path(RUN_DIR) / "track_record.json").exists():
+        tr = json.loads((Path(RUN_DIR) / "track_record.json").read_text())
+        meta = json.loads((Path(RUN_DIR) / "campaign.json").read_text()) if (Path(RUN_DIR) / "campaign.json").exists() else {}
+        nb = [json.loads(l) for l in (Path(RUN_DIR) / "notebook.jsonl").read_text().splitlines() if l.strip()] if (Path(RUN_DIR) / "notebook.jsonl").exists() else []
+        cl = [json.loads(l) for l in (Path(RUN_DIR) / "changelog.jsonl").read_text().splitlines() if l.strip()] if (Path(RUN_DIR) / "changelog.jsonl").exists() else []
+        cum = lambda k: (eval("*".join(str(1 + (r.get(k) or 0)) for r in tr)) - 1) if tr else 0
+        beat = sum(1 for r in tr if (r.get("team") or 0) > (r.get("spy") or 0))
+        s = base(prs, n, "What actually happened: the first full run", f"{len(tr)} quarterly seasons, {meta.get('model', 'qwen3:8b')}, one momentum persona, coach on, Oct 23, 2026",
+                 "Out of sample, season by season. Read it as a measurement of the loop, not as a verdict on AI trading.",
+                 footer="Research tried " + str(len(nb)) + " strategies; the coach applied " + str(len([c for c in cl if c.get('status') != 'rejected'])) + " changes. Costs 5 bp per unit of weight traded. Partial seasons use data up to the last available day."); n += 1
+        stats = [(f"{beat} of {len(tr)}", "seasons the team beat SPY"), (pct(cum("team") * 100), "team, compounded over the run"), (pct(cum("spy") * 100), "SPY over the same quarters"),
+                 (pct(cum("book") * 100), "quant book alone"), ]
+        for i, (big, small) in enumerate(stats):
+            x = 0.55 + i * 3.06
+            rect(s, x, 1.92, 2.81, 1.30)
+            tb(s, x + 0.21, 2.04, 2.40, 0.50, big, size=24, bold=True, color=JHU, font=TITLE_FONT, fit=False)
+            tb(s, x + 0.21, 2.58, 2.40, 0.56, small, size=11.25, color=BODY)
+        cols = [("Season", 1.6), ("Quant book", 2.6), ("Val Sharpe", 1.1), ("Season Sharpe", 1.3), ("Team", 1.0), ("SPY", 1.0), ("Excess", 1.0), ("Desk", 1.0), ("Changes after", 1.6)]
+        y = 3.50
+        x = 0.55
+        for name, w in cols:
+            tb(s, x, y, w, 0.3, name, size=10.5, bold=True, color=GREY, fit=False, align=PP_ALIGN.RIGHT if name not in ("Season", "Quant book", "Changes after") else None)
+            x += w
+        y += 0.34
+        for r in tr:
+            x = 0.55
+            vals = [f"S{r['season']}, {r.get('label', '')}" + (" (partial)" if r.get("partial") else ""), str(r.get("book_name") or ""),
+                    "–" if r.get("book_val_sharpe") is None else f"{r['book_val_sharpe']:.2f}", "–" if r.get("book_season_sharpe") is None else f"{r['book_season_sharpe']:.2f}",
+                    pct((r.get("team") or 0) * 100), pct((r.get("spy") or 0) * 100), pct(((r.get("team") or 0) - (r.get("spy") or 0)) * 100),
+                    pct((r.get("desk") or 0) * 100), ", ".join(str(c["id"]) for c in cl if c.get("season") == r["season"]) or "–"]
+            for (name, w), v in zip(cols, vals):
+                tb(s, x, y, w, 0.3, v, size=11, color=BODY, fit=False, align=PP_ALIGN.RIGHT if name not in ("Season", "Quant book", "Changes after") else None)
+                x += w
+            y += 0.32
+        light_banner(s, 0.55, max(y + 0.15, 5.9), 12.23, 0.70, "Questions for the room: did validation Sharpe predict the season? Did the coach's changes do what they expected? Would a run with the coach switched off look different?", size=11.5)
+
     # S. run it yourself
     s = base(prs, n, "Run it yourself", "Everything is public. Clone it, pull one model, open the page",
-             footer="Status on Oct 24, 2026: design spec and the dashboard mockup are published; the Python package is landing in the same repo this week."); n += 1
-    code_box(s, 0.55, 1.10, 7.3, 2.65, "ollama pull qwen3:8b\ngit clone https://" + REPO + ".git && cd aiInvesting\nuv run python -m aitrader serve        # http://localhost:8000, click Run campaign\n\n# or the command line\nuv run python -m aitrader fetch \"12 large-cap US tech names plus SPY, 2015 to today\"\nuv run python -m aitrader campaign --seasons 6 --personas 1\nuv run python -m aitrader replay runs/<campaign> --speed 5", label="Three commands", size=9.5)
+             footer="Published Oct 24, 2026: design spec, dashboard and the Python package are in the repo. 52 offline tests; verified end to end against Ollama with real data."); n += 1
+    code_box(s, 0.55, 1.10, 7.3, 2.65, "ollama pull qwen3:8b\ngit clone https://" + REPO + ".git && cd aiInvesting\nuv run python -m aitrader serve          # http://localhost:8000, click Run campaign\n\n# or the command line\nuv run python -m aitrader campaign --quick               # 2 short seasons, ~2 min\nuv run python -m aitrader campaign --personas momentum,contrarian --apply approve\nuv run python -m aitrader replay runs/<campaign> --speed 5\nuv run pytest                                            # 52 offline tests", label="Three commands", size=9.5)
     rect(s, 8.05, 1.10, 4.73, 2.65)
     tb(s, 8.21, 1.20, 4.4, 0.24, "WHICH MODEL FOR WHICH LAPTOP", size=9.5, bold=True, color=BLUE2, fit=False)
     rows = [("8 GB", "qwen3:4b", "slower; run 3 seasons; use Replay in class"), ("16 GB", "qwen3:8b", "the default, verified"), ("32 GB+", "qwen3:14b", "better code, about twice as slow")]
@@ -416,7 +463,7 @@ def build_section(prs, n0):
     tb(s, 0.55, 4.00, 12.23, 0.25, "IN THE REPO", size=10.5, bold=True, color=BLUE2, fit=False)
     items = [("docs/superpowers/specs/", "The full design: roles, phases, schemas, lever menu, budgets, error handling, test plan, two-day build schedule."),
              ("docs/mockups/mission-control.html", "The dashboard you just saw. One file, open it in any browser, no server needed."),
-             ("docs/slides/", "This section of the deck as its own PowerPoint and PDF, so you can reuse it."),
+             ("aitrader/", "The package: orchestrator, agents, prompts, levers, sandbox, engine, web server. 52 tests run offline with a fake model."),
              ("No secrets, by design", "Nothing in the repo needs a key, so there is nothing to leak. The .gitignore excludes data and run folders. MIT license.")]
     for i, (t, bdy) in enumerate(items):
         x = 0.55 + (i % 2) * 6.23; y = 4.35 + (i // 2) * 1.25
@@ -427,7 +474,7 @@ def build_section(prs, n0):
 
     # T. questions
     s = base(prs, n, "Questions for the room", "Argue from the numbers the dashboard shows",
-             "Four seasons of data, seven agents, one coach. What would convince you the team is skilled rather than lucky?"); n += 1
+             "Six seasons of data, seven agents, one coach. What would convince you the team is skilled rather than lucky?"); n += 1
     qs = [("Did validation predict the season?", "Look at the hollow and filled dots. If a strategy's validation Sharpe does not predict its season Sharpe, what is the selector actually selecting?"),
           ("Would you let the coach apply changes automatically?", "Auto mode closes the loop. Approve mode makes you the risk committee. Which would a real fund choose, and why?"),
           ("Where could lookahead still sneak in?", "The engine lags one bar, the sandbox blocks negative shifts, the perturbation test withholds 60 days. What did we miss?"),

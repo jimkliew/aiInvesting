@@ -1,0 +1,48 @@
+{
+  "universe": {
+    "tickers": [
+      "AAPL",
+      "MSFT",
+      "NVDA",
+      "AMZN",
+      "GOOGL",
+      "META",
+      "TSLA",
+      "AVGO",
+      "AMD",
+      "CRM",
+      "ORCL",
+      "NFLX"
+    ],
+    "benchmark": "SPY",
+    "start": "2015-01-01",
+    "cost_bps": 5,
+    "campaign_start": "2025-01-01",
+    "seasons": 6
+  },
+  "model": "qwen3:8b",
+  "personas": [
+    "momentum"
+  ],
+  "apply_mode": "auto",
+  "quick": false,
+  "seasons": 6,
+  "params_at_start": {
+    "desk.max_weight": 0.3,
+    "critic.min_val_sharpe": 0.5,
+    "research.rounds": 1,
+    "research.ideas_per_round": 4,
+    "desk.rebalance": "monthly",
+    "book.rebalance": "weekly",
+    "selector.max_turnover": 300,
+    "family_focus": {
+      "emphasise": [],
+      "avoid": []
+    },
+    "budget.max_llm_calls": 120,
+    "budget.max_minutes": 20,
+    "budget.max_strategies": 8
+  },
+  "data_report": "Fetched daily data for AAPL, MSFT, NVDA, AMZN, GOOGL, META, TSLA, AVGO, AMD, CRM, ORCL, NFLX, and SPY from 2015-01-02 to 2026-10-23. All tickers have complete and consistent data with no gaps. No replacements were needed.",
+  "data_sha256": "08d1b1502de39f1061688605d3c28dabefae5a901012f19f88341b549f1198b1"
+}

@@ -1,0 +1,37 @@
+[project]
+name = "aitrader"
+version = "0.1.0"
+description = "An AI investment team you can run on your laptop with Ollama. No API keys."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+  "ollama>=0.5",
+  "pandas>=2.2",
+  "numpy>=1.26",
+  "yfinance>=0.2.50",
+  "pyarrow>=15",
+  "pydantic>=2.7",
+  "fastapi>=0.115",
+  "uvicorn>=0.30",
+  "pyyaml>=6",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "httpx>=0.27"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["aitrader"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-m 'not network and not ollama' -q"
+markers = [
+  "network: needs internet access (yfinance)",
+  "ollama: needs a running Ollama server with the default model",
+]
+filterwarnings = ["ignore::DeprecationWarning", "ignore::FutureWarning"]
