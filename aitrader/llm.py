@@ -75,12 +75,12 @@ class LLM:
         return True, f"Ollama ok, {self.model} available"
 
     # ---- raw call ----
-    def _chat(self, messages: list[dict], agent: str, fmt: Any = None, tools: list | None = None):
+    def _chat(self, messages: list[dict], agent: str, fmt: Any = None, tools: list | None = None, temperature: float = 0.0):
         if self.budget:
             self.budget.spend()
         self.calls += 1
         t0 = time.time()
-        kwargs: dict[str, Any] = {"model": self.model, "messages": messages, "options": {"temperature": 0}}
+        kwargs: dict[str, Any] = {"model": self.model, "messages": messages, "options": {"temperature": temperature}}
         if fmt is not None:
             kwargs["format"] = fmt
         if tools:
@@ -104,12 +104,13 @@ class LLM:
         return resp
 
     # ---- structured output ----
-    def structured(self, system: str, user: str, schema: type[BaseModel], agent: str = "", retries: int = 3):
+    def structured(self, system: str, user: str, schema: type[BaseModel], agent: str = "", retries: int = 3,
+                   temperature: float = 0.0):
         messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
         fmt = schema.model_json_schema()
         last_err = ""
         for attempt in range(1, retries + 1):
-            resp = self._chat(messages, agent, fmt=fmt)
+            resp = self._chat(messages, agent, fmt=fmt, temperature=temperature)
             content = resp.message.content or ""
             try:
                 return schema.model_validate_json(content)

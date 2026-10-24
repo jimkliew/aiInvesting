@@ -216,6 +216,9 @@ class Orchestrator:
                         ok, msg, full_w = lookahead_check(code, vis_prices, vis_feats)
                     except Rejected as e:
                         feedback = str(e)
+                        if "KeyError" in feedback:
+                            feedback += (". Only these feature keys exist: " + ", ".join(sorted(vis_feats)) +
+                                         ". Compute anything else yourself from prices or features['ret_1d'].")
                         self.emit("sandbox_rejected", text=f"Rejected: {feedback}. Sent back to the Coder Agent.", name=hyp.name, error=feedback)
                         continue
                     if not ok:

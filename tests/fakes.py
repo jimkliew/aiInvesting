@@ -31,7 +31,7 @@ class FakeLLM:
             r = r(system, user)
         return r
 
-    def structured(self, system, user, schema, agent="", retries=3):
+    def structured(self, system, user, schema, agent="", retries=3, temperature=0.0):
         last = ""
         for _ in range(retries):
             self.calls += 1

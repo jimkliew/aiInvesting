@@ -21,6 +21,7 @@ def write_code(llm, hyp: Hypothesis, catalog: str, feedback: str | None = None,
             f"{catalog}\n")
     if feedback:
         user += f"\nYour previous attempt failed with this error:\n{feedback}\nReturn the full corrected function."
-    out: StrategyCode = llm.structured(system, user, StrategyCode, agent=agent)
+    # a little randomness on retries so the model does not resubmit the same code
+    out: StrategyCode = llm.structured(system, user, StrategyCode, agent=agent, temperature=0.0 if feedback is None else 0.4)
     out.code = strip_fences(out.code)
     return out
