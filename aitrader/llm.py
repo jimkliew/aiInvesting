@@ -79,6 +79,9 @@ class LLM:
         if self.budget:
             self.budget.spend()
         self.calls += 1
+        if self.bus:
+            self.bus.emit("llm_start", _transient=True, agent=agent,
+                          prompt_chars=sum(len(str(m.get("content", ""))) for m in messages), tools=bool(tools))
         t0 = time.time()
         kwargs: dict[str, Any] = {"model": self.model, "messages": messages, "options": {"temperature": temperature}}
         if fmt is not None:

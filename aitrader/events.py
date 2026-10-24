@@ -66,12 +66,14 @@ class EventBus:
         if fn in self._subs:
             self._subs.remove(fn)
 
-    def emit(self, kind: str, **payload: Any) -> Event:
+    def emit(self, kind: str, _transient: bool = False, **payload: Any) -> Event:
+        """Emit an event. Transient events (token streams, heartbeats) go to subscribers only, never to the trace."""
         with self._lock:
-            self.seq += 1
+            if not _transient:
+                self.seq += 1
             ev = Event(
                 ts=datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
-                seq=self.seq,
+                seq=0 if _transient else self.seq,
                 campaign=self.campaign,
                 season=self.season,
                 phase=self.phase,
@@ -79,7 +81,7 @@ class EventBus:
                 kind=kind,
                 payload=payload,
             )
-            if self.trace_path:
+            if self.trace_path and not _transient:
                 with open(self.trace_path, "a") as f:
                     f.write(ev.to_json() + "\n")
         for fn in list(self._subs):
