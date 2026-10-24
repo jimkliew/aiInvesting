@@ -11,3 +11,6 @@ __pycache__/
 .ipynb_checkpoints/
 # os
 .DS_Store
+
+# slides build artefacts
+~$*.pptx
